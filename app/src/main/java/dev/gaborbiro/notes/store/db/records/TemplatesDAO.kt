@@ -1,13 +1,16 @@
 package dev.gaborbiro.notes.store.db.records
 
 import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Upsert
 import dev.gaborbiro.notes.store.db.records.model.TemplateDBModel
 
 @Dao
 interface TemplatesDAO {
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertOrUpdate(template: TemplateDBModel): Long
+
+    @Query("SELECT * FROM templates WHERE _id=:id")
+    suspend fun get(id: Long): TemplateDBModel?
 }

@@ -55,6 +55,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.core.os.bundleOf
 import androidx.lifecycle.coroutineScope
 import dev.gaborbiro.notes.R
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
@@ -74,20 +75,33 @@ class HostActivity : AppCompatActivity() {
     companion object {
 
         fun launchAddNoteWithCamera(context: Context) {
-            launchActivityWithoutTask(context, getActionIntent(context, EXTRA_ACTION_CAMERA))
+            launchActivity(context, getActionIntent(context, EXTRA_ACTION_CAMERA))
         }
 
         fun launchAddNoteWithImage(context: Context) {
-            launchActivityWithoutTask(context, getActionIntent(context, EXTRA_ACTION_IMAGE))
+            launchActivity(context, getActionIntent(context, EXTRA_ACTION_IMAGE))
         }
 
         fun launchAddNote(context: Context) {
-            launchActivityWithoutTask(context, getActionIntent(context, EXTRA_ACTION_TEXT_ONLY))
+            launchActivity(context, getActionIntent(context, EXTRA_ACTION_TEXT_ONLY))
         }
 
-        private fun launchActivityWithoutTask(appContext: Context, intent: Intent) {
-            appContext.startActivity(intent.also {
-                it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        fun launchRedoImage(context: Context, templateId: Long) {
+            launchActivity(
+                appContext = context,
+                intent = getActionIntent(context, EXTRA_ACTION_REDO_IMAGE),
+                EXTRA_KEY_TEMPLATE_ID to templateId
+            )
+        }
+
+        private fun launchActivity(
+            appContext: Context,
+            intent: Intent,
+            vararg extras: Pair<String, out Any>
+        ) {
+            appContext.startActivity(intent.also { intent ->
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                intent.putExtras(bundleOf(*extras))
             })
         }
 
@@ -100,9 +114,17 @@ class HostActivity : AppCompatActivity() {
         private const val EXTRA_ACTION_CAMERA = "camera"
         private const val EXTRA_ACTION_IMAGE = "image"
         private const val EXTRA_ACTION_TEXT_ONLY = "text_only"
+
+        private const val EXTRA_ACTION_REDO_IMAGE = "redo_image"
+        private const val EXTRA_KEY_TEMPLATE_ID = "template_id"
+
+        internal data class Target(
+            val record: Long?,
+            val template: Long?
+        )
     }
 
-    private val recordsRepository by lazy { RecordsRepository.get() }
+    private val repository by lazy { RecordsRepository.get() }
     private val documentWriter by lazy { DocumentWriter(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -113,7 +135,7 @@ class HostActivity : AppCompatActivity() {
                 EXTRA_ACTION_CAMERA -> {
                     val launcher = rememberLauncherForActivityResult(
                         contract = ActivityResultContracts.TakePicturePreview(),
-                        onResult = ::onPhotoTaken
+                        onResult = this::onPhotoTaken
                     )
                     SideEffect {
                         launcher.launch(null)
@@ -133,6 +155,22 @@ class HostActivity : AppCompatActivity() {
                 EXTRA_ACTION_TEXT_ONLY -> {
                     ShowNoteEntryDialog { name, description ->
                         createNote(image = null, name, description)
+                    }
+                }
+
+                EXTRA_ACTION_REDO_IMAGE -> {
+                    val templateId = intent.getLongExtra(EXTRA_KEY_TEMPLATE_ID, -1L)
+
+                    val launcher = rememberLauncherForActivityResult(
+                        contract = ActivityResultContracts.TakePicturePreview(),
+                        onResult = { bitmap ->
+                            bitmap
+                                ?.let { onPhotoTaken(it, templateId) }
+                                ?: run { finish() }
+                        }
+                    )
+                    SideEffect {
+                        launcher.launch(null)
                     }
                 }
 
@@ -315,21 +353,33 @@ class HostActivity : AppCompatActivity() {
     }
 
     private fun onPhotoTaken(bitmap: Bitmap?) {
-        val correctedBitmap = bitmap?.let { correctBitmapRotation(display!!, bitmap) }
         lifecycle.coroutineScope.launch {
-            val uri: Uri? = correctedBitmap?.let { bitmap ->
-                ByteArrayOutputStream().let { stream ->
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 0, stream)
-                    val inStream = ByteArrayInputStream(stream.toByteArray())
-                    documentWriter.write(inStream, "${System.currentTimeMillis()}.png")
-                }
-            }
+            val uri: Uri? = bitmap?.let { persistBitmap(it) }
             setContent {
                 ShowNoteEntryDialog { name, description ->
                     createNote(uri, name, description)
                 }
             }
         }
+    }
+
+    private fun onPhotoTaken(bitmap: Bitmap, templateId: Long) {
+        lifecycle.coroutineScope.launch {
+            val uri = persistBitmap(bitmap)
+            repository.updateTemplatePhoto(templateId, uri)
+            NotesWidgetsUpdater.oneOffUpdate(this@HostActivity)
+            finish()
+        }
+    }
+
+    private suspend fun persistBitmap(bitmap: Bitmap): Uri {
+        val correctedBitmap = correctBitmapRotation(display!!, bitmap)
+        val uri = ByteArrayOutputStream().let { stream ->
+            correctedBitmap.compress(Bitmap.CompressFormat.PNG, 0, stream)
+            val inStream = ByteArrayInputStream(stream.toByteArray())
+            documentWriter.write(inStream, "${System.currentTimeMillis()}.png")
+        }
+        return uri
     }
 
     private fun onImagePicked(image: Uri?) {
@@ -346,16 +396,18 @@ class HostActivity : AppCompatActivity() {
 
     private fun createNote(image: Uri?, name: String, description: String) {
         lifecycle.coroutineScope.launch {
-            val record = ToSaveRecord(
-                timestamp = LocalDateTime.now(),
-                notes = "",
-            )
             val template = ToSaveTemplate(
                 image = image,
                 name = name,
                 description = description,
             )
-            val id = recordsRepository.saveTemplateAndRecord(record, template)
+            val templateId = repository.saveTemplate(template)
+            val record = ToSaveRecord(
+                timestamp = LocalDateTime.now(),
+                templateId = templateId,
+                notes = "",
+            )
+            val id = repository.saveRecord(record)
             Toast.makeText(this@HostActivity, "Record saved ($id)", Toast.LENGTH_SHORT).show()
             NotesWidgetsUpdater.oneOffUpdate(this@HostActivity)
             finish()

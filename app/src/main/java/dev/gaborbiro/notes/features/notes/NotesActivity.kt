@@ -4,7 +4,6 @@ package dev.gaborbiro.notes.features.notes
 
 import android.graphics.Bitmap
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
@@ -14,7 +13,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -22,14 +20,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -51,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -60,6 +58,7 @@ import dev.gaborbiro.notes.R
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.features.common.RecordsUIMapper
 import dev.gaborbiro.notes.features.common.model.RecordUIModel
+import dev.gaborbiro.notes.features.widget.HostActivity
 import dev.gaborbiro.notes.features.widget.NotesWidgetsUpdater
 import dev.gaborbiro.notes.ui.theme.NotesTheme
 import dev.gaborbiro.notes.ui.theme.PaddingDefault
@@ -97,19 +96,9 @@ class MainActivity : ComponentActivity() {
             verticalArrangement = Arrangement.spacedBy(PaddingHalf),
             state = listState,
             modifier = Modifier
-                .fillMaxHeight()
-                .background(color = MaterialTheme.colorScheme.background)
+                .background(color = MaterialTheme.colorScheme.background),
         ) {
-//            stickyHeader {
-//                Text(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .background(MaterialTheme.colorScheme.secondary)
-//                        .padding(all = PaddingHalf),
-//                    text = "df"
-//                )
-//            }
-            items(records.size, key = { records[it].id }) {
+            items(records.size, key = { records[it].recordId }) {
                 Record(record = records[it], Modifier.animateItemPlacement())
             }
         }
@@ -153,10 +142,10 @@ class MainActivity : ComponentActivity() {
             label = "Delete"
         ),
         PopUpMenuItem(
-            id = "edit",
-            icon = Icons.Outlined.Edit,
-            label = "Edit"
-        )
+            id = "retake_photo",
+            icon = Icons.Outlined.PhotoCamera,
+            label = "Edit photo"
+        ),
     )
 
     private fun onMenuItemSelected(
@@ -166,13 +155,13 @@ class MainActivity : ComponentActivity() {
         when (menuId) {
             "delete" -> {
                 lifecycle.coroutineScope.launch {
-                    recordsRepository.delete(record.id)
+                    recordsRepository.delete(record.recordId)
                     NotesWidgetsUpdater.oneOffUpdate(this@MainActivity)
                 }
             }
 
-            "edit" -> {
-                Toast.makeText(this, "Not yet implemented", Toast.LENGTH_SHORT).show()
+            "retake_photo" -> {
+                HostActivity.launchRedoImage(this, record.templateId)
             }
         }
     }
@@ -181,44 +170,50 @@ class MainActivity : ComponentActivity() {
     fun Record(record: RecordUIModel, modifier: Modifier = Modifier) {
         Card(
             modifier = modifier
-                .fillMaxWidth()
-                .padding(start = PaddingDefault, end = PaddingDefault, top = PaddingDefault),
+                .padding(start = PaddingDefault, end = PaddingDefault, top = PaddingDefault)
+                .height(130.dp),
             elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
         ) {
-            Row(
-                modifier = Modifier,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 record.bitmap?.let { bitmap: Bitmap ->
                     Image(
                         painter = BitmapPainter(bitmap.asImageBitmap()),
-                        contentDescription = "placeholder",
+                        contentScale = ContentScale.Crop,
+                        contentDescription = "note image",
                         modifier = Modifier
-                            .width(IntrinsicSize.Min)
+                            .fillMaxHeight()
+                            .weight(.2f)
                     )
                 }
-                Spacer(modifier = Modifier.width(16.dp))
                 Column(
                     modifier = Modifier
-                        .height(IntrinsicSize.Max)
-                        .padding(vertical = PaddingDefault)
+                        .wrapContentHeight()
+                        .weight(.8f)
+                        .padding(top = PaddingDefault),
+                    verticalArrangement = Arrangement.Bottom,
                 ) {
                     Text(
-                        text = record.title,
                         modifier = Modifier
-                            .fillMaxWidth(),
-                        style = MaterialTheme.typography.titleLarge
+                            .fillMaxWidth()
+                            .padding(start = PaddingDefault, end = PaddingDefault)
+                            .weight(1f),
+                        text = record.title,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.inverseSurface,
                     )
-                    Spacer(modifier = Modifier.height(PaddingHalf))
                     Row(
                         modifier = Modifier
-                            .padding(top = PaddingDefault)
-                            .fillMaxWidth(),
+                            .padding(start = PaddingDefault)
+                            .wrapContentHeight(),
+                        verticalAlignment = Alignment.Bottom
                     ) {
                         Text(
                             text = record.timestamp,
+                            style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier
-                                .wrapContentWidth(),
+                                .padding(bottom = PaddingDefault),
                         )
                         Spacer(Modifier.weight(1f))
                         PopUpMenuButton(
@@ -227,6 +222,7 @@ class MainActivity : ComponentActivity() {
                                 onMenuItemSelected(record, it)
                             },
                             modifier = Modifier
+                                .padding(bottom = 2.dp)
                         )
                     }
                 }
@@ -281,7 +277,7 @@ class MainActivity : ComponentActivity() {
                             leadingIcon = {
                                 Icon(
                                     imageVector = item.icon,
-                                    contentDescription = null,
+                                    contentDescription = item.label,
                                     tint = MaterialTheme.colorScheme.background,
                                 )
                             }

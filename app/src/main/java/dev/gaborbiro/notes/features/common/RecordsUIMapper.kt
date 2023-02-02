@@ -24,13 +24,16 @@ class RecordsUIMapper(
             !timestamp.isBefore(LocalDateTime.now().truncatedTo(ChronoUnit.DAYS)) -> {
                 "today at ${timestamp.formatShortTime()}"
             }
+
             !timestamp.isBefore(LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).minusDays(1)) -> {
                 "yesterday at ${timestamp.formatShortTime()}"
             }
+
             else -> timestamp.formatShort()
         }
         return RecordUIModel(
-            id = record.id,
+            recordId = record.id,
+            templateId = record.template.id,
             bitmap = bitmap,
             timestamp = timestampStr,
             title = record.template.name

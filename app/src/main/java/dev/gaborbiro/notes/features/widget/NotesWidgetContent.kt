@@ -101,7 +101,7 @@ fun Record(record: RecordUIModel) {
             .clickable(
                 actionRunCallback<DuplicateNoteAction>(
                     actionParametersOf(
-                        ActionParameters.Key<Long>(PREFS_KEY_RECORD) to record.id
+                        ActionParameters.Key<Long>(PREFS_KEY_RECORD) to record.recordId
                     )
                 )
             )

@@ -33,10 +33,10 @@ class RecordsMapperImpl : RecordsMapper {
         )
     }
 
-    override fun map(record: ToSaveRecord, templateId: Long): RecordDBModel {
+    override fun map(record: ToSaveRecord): RecordDBModel {
         return RecordDBModel(
             timestamp = record.timestamp,
-            templateId = templateId,
+            templateId = record.templateId,
             notes = record.notes,
         )
     }
@@ -53,9 +53,9 @@ class RecordsMapperImpl : RecordsMapper {
         return map(
             ToSaveRecord(
                 timestamp = LocalDateTime.now(),
+                templateId = record.template.id,
                 notes = notes
-            ),
-            templateId = record.template.id
+            )
         )
     }
 }

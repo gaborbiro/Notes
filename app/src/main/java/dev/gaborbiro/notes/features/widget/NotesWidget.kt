@@ -53,3 +53,8 @@ class NotesWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = NotesWidget()
 }
 
+class NotesWidgetReceiverSmall : GlanceAppWidgetReceiver() {
+
+    override val glanceAppWidget: GlanceAppWidget = NotesWidget()
+}
+

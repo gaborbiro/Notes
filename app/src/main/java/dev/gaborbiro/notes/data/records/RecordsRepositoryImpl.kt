@@ -1,5 +1,6 @@
 package dev.gaborbiro.notes.data.records
 
+import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Transformations
 import androidx.room.Transaction
@@ -9,6 +10,7 @@ import dev.gaborbiro.notes.data.records.domain.model.ToSaveRecord
 import dev.gaborbiro.notes.data.records.domain.model.ToSaveTemplate
 import dev.gaborbiro.notes.store.db.records.RecordsDAO
 import dev.gaborbiro.notes.store.db.records.TemplatesDAO
+import dev.gaborbiro.notes.store.db.records.model.TemplateDBModel
 
 class RecordsRepositoryImpl(
     private val templatesDAO: TemplatesDAO,
@@ -24,16 +26,16 @@ class RecordsRepositoryImpl(
         return Transformations.map(recordsDAO.getLiveData(), mapper::map)
     }
 
-    override suspend fun saveTemplateAndRecord(
+    override suspend fun saveRecord(
         record: ToSaveRecord,
-        template: ToSaveTemplate
     ): Long {
-        val templateId = templatesDAO.insertOrUpdate(mapper.map(template))
-        return recordsDAO.insert(mapper.map(record, templateId))
+        return recordsDAO.insert(mapper.map(record))
     }
 
-    override suspend fun saveRecord(record: ToSaveRecord, templateId: Long): Long {
-        return recordsDAO.insert(mapper.map(record, templateId))
+    override suspend fun saveTemplate(
+        template: ToSaveTemplate
+    ): Long {
+        return templatesDAO.insertOrUpdate(mapper.map(template))
     }
 
     override suspend fun duplicateRecord(recordId: Long, notes: String): Long {
@@ -49,5 +51,19 @@ class RecordsRepositoryImpl(
 
     override suspend fun delete(recordId: Long): Boolean {
         return recordsDAO.delete(recordId) > 0
+    }
+
+    override suspend fun updateTemplatePhoto(templateId: Long, uri: Uri): Boolean {
+        return templatesDAO.get(templateId)?.let { oldTemplate ->
+            templatesDAO.insertOrUpdate(
+                TemplateDBModel(
+                    image = uri,
+                    name = oldTemplate.name,
+                    description = oldTemplate.description,
+                ).also {
+                    it.id = templateId
+                }
+            ) >= 0
+        } == true
     }
 }

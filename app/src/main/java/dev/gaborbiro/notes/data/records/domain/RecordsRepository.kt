@@ -1,5 +1,6 @@
 package dev.gaborbiro.notes.data.records.domain
 
+import android.net.Uri
 import androidx.lifecycle.LiveData
 import dev.gaborbiro.notes.data.records.RecordsMapper
 import dev.gaborbiro.notes.data.records.RecordsRepositoryImpl
@@ -30,13 +31,14 @@ interface RecordsRepository {
 
     fun getRecordsLiveData(): LiveData<List<Record>>
 
-    suspend fun saveTemplateAndRecord(record: ToSaveRecord, template: ToSaveTemplate): Long
+    suspend fun saveTemplate(template: ToSaveTemplate): Long
 
-    suspend fun saveRecord(record: ToSaveRecord, templateId: Long): Long
+    suspend fun saveRecord(record: ToSaveRecord): Long
 
     suspend fun duplicateRecord(recordId: Long, notes: String): Long
 
     suspend fun getRecord(recordId: Long): Record?
 
     suspend fun delete(recordId: Long): Boolean
+    suspend fun updateTemplatePhoto(templateId: Long, uri: Uri): Boolean
 }

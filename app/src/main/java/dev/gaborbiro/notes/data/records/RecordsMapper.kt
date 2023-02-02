@@ -17,7 +17,7 @@ interface RecordsMapper {
 
     fun map(record: RecordAndTemplateDBModel): Record
 
-    fun map(record: ToSaveRecord, templateId: Long): RecordDBModel
+    fun map(record: ToSaveRecord): RecordDBModel
 
     fun map(template: ToSaveTemplate): TemplateDBModel
 

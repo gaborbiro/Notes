@@ -7,15 +7,20 @@ import android.graphics.Matrix
 import android.net.Uri
 import android.view.Display
 import android.view.Surface
+import java.io.FileNotFoundException
 
 class BitmapLoader(
     private val context: Context,
 ) {
 
-    fun uriToBitmap(uri: Uri): Bitmap {
-        return ImageDecoder.decodeBitmap(
-            ImageDecoder.createSource(context.contentResolver, uri)
-        )
+    fun uriToBitmap(uri: Uri): Bitmap? {
+        try {
+            return ImageDecoder.decodeBitmap(
+                ImageDecoder.createSource(context.contentResolver, uri)
+            )
+        } catch (e: FileNotFoundException) {
+            return null
+        }
     }
 }
 
