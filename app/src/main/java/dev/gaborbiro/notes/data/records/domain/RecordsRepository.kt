@@ -1,5 +1,6 @@
 package dev.gaborbiro.notes.data.records.domain
 
+import androidx.lifecycle.LiveData
 import dev.gaborbiro.notes.data.records.RecordsMapper
 import dev.gaborbiro.notes.data.records.RecordsRepositoryImpl
 import dev.gaborbiro.notes.data.records.domain.model.Record
@@ -26,6 +27,8 @@ interface RecordsRepository {
     }
 
     suspend fun getRecords(): List<Record>
+
+    fun getRecordsLiveData(): LiveData<List<Record>>
 
     suspend fun saveTemplateAndRecord(record: ToSaveRecord, template: ToSaveTemplate): Long
 

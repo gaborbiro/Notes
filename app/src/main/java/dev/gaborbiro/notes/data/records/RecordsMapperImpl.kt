@@ -11,21 +11,25 @@ import java.time.LocalDateTime
 
 class RecordsMapperImpl : RecordsMapper {
 
-    override fun map(record: RecordAndTemplateDBModel): Record {
-        return Record(
-            id = record.record.id!!,
-            timestamp = record.record.timestamp,
-            template = map(record.template),
-            notes = record.record.notes,
-        )
-    }
-
     private fun map(template: TemplateDBModel): Template {
         return Template(
             id = template.id!!,
             image = template.image,
             name = template.name,
             description = template.description,
+        )
+    }
+
+    override fun map(records: List<RecordAndTemplateDBModel>): List<Record> {
+        return records.map(::map)
+    }
+
+    override fun map(record: RecordAndTemplateDBModel): Record {
+        return Record(
+            id = record.record.id!!,
+            timestamp = record.record.timestamp,
+            template = map(record.template),
+            notes = record.record.notes,
         )
     }
 

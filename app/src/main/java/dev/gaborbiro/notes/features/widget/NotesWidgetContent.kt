@@ -22,10 +22,11 @@ import androidx.glance.layout.Column
 import androidx.glance.layout.ContentScale
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
+import androidx.glance.layout.fillMaxHeight
+import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
-import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.layout.wrapContentHeight
 import androidx.glance.text.FontWeight
@@ -79,66 +80,53 @@ fun Records(
 fun Record(record: RecordUIModel) {
     Row(
         modifier = GlanceModifier
-            .clickable(
-                actionRunCallback<DuplicateNoteAction>(
-                    actionParametersOf(
-                        ActionParameters.Key<Long>(PREFS_KEY_RECORD) to record.id
-                    )
-                )
-            ),
-        verticalAlignment = CenterVertically,
+            .fillMaxWidth()
+            .padding(vertical = PaddingHalf),
     ) {
         record.bitmap?.let { image: Bitmap ->
             Image(
                 provider = ImageProvider(image),
                 contentDescription = "note image",
                 modifier = GlanceModifier
-                    .size(80.dp),
-                contentScale = ContentScale.Fit,
-            )
-            Spacer(modifier = GlanceModifier.width(PaddingDefault))
-        }
-        Column(
-            modifier = GlanceModifier
-        ) {
-            Text(
-                text = record.timestamp,
-                style = RecordDateTextStyle
-            )
-            Spacer(modifier = GlanceModifier.height(PaddingHalf))
-            Text(
-                text = record.title,
-                modifier = GlanceModifier
-                    .width(160.dp),
-                maxLines = 2,
-                style = RecordTitleTextStyle
+                    .width(60.dp)
+                    .height(60.dp),
+                contentScale = ContentScale.Crop,
             )
         }
+        Spacer(modifier = GlanceModifier.width(PaddingDefault))
         Row(
+            horizontalAlignment = Alignment.Horizontal.End,
+            verticalAlignment = CenterVertically,
             modifier = GlanceModifier
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.End,
+                .fillMaxSize()
         ) {
+            Column(
+                modifier = GlanceModifier
+                    .defaultWeight()
+            ) {
+                Text(
+                    text = record.title,
+                    modifier = GlanceModifier,
+                    maxLines = 2,
+                    style = RecordTitleTextStyle
+                )
+                Text(
+                    text = record.timestamp,
+                    style = RecordDateTextStyle,
+                    modifier = GlanceModifier
+                        .fillMaxWidth()
+                )
+            }
             Image(
                 provider = ImageProvider(resId = R.drawable.ic_add),
                 contentDescription = "Add entry again",
                 modifier = GlanceModifier
-                    .padding(all = 8.dp)
+                    .defaultWeight()
+                    .width(36.dp)
+                    .fillMaxHeight()
+                    .padding(horizontal = PaddingDefault)
                     .clickable(
                         actionRunCallback<DuplicateNoteAction>(
-                            actionParametersOf(
-                                ActionParameters.Key<Long>(PREFS_KEY_RECORD) to record.id
-                            )
-                        )
-                    )
-            )
-            Image(
-                provider = ImageProvider(resId = R.drawable.ic_delete),
-                contentDescription = "Delete entry",
-                modifier = GlanceModifier
-                    .padding(all = 8.dp)
-                    .clickable(
-                        actionRunCallback<DeleteNoteAction>(
                             actionParametersOf(
                                 ActionParameters.Key<Long>(PREFS_KEY_RECORD) to record.id
                             )
@@ -221,19 +209,6 @@ class AddNoteAction : ActionCallback {
     }
 }
 
-class DeleteNoteAction : ActionCallback {
-    override suspend fun onAction(
-        context: Context,
-        glanceId: GlanceId,
-        parameters: ActionParameters
-    ) {
-        val recordId = parameters[ActionParameters.Key<Long>(PREFS_KEY_RECORD)]!!
-        val repo = RecordsRepository.get()
-        println("Delete: ${repo.delete(recordId)}")
-        NotesWidgetsUpdater.oneOffUpdate(context)
-    }
-}
-
 class DuplicateNoteAction : ActionCallback {
 
     override suspend fun onAction(
@@ -242,8 +217,7 @@ class DuplicateNoteAction : ActionCallback {
         parameters: ActionParameters
     ) {
         val recordId = parameters[ActionParameters.Key<Long>(PREFS_KEY_RECORD)]!!
-        val newId = RecordsRepository.get().duplicateRecord(recordId, "")
-        println("NotesWidget id: $newId")
+        RecordsRepository.get().duplicateRecord(recordId, "")
         NotesWidgetsUpdater.oneOffUpdate(context)
     }
 }
@@ -256,10 +230,10 @@ val RecordTitleTextStyle = TextStyle(
 )
 
 val RecordDateTextStyle = TextStyle(
-    fontWeight = FontWeight.Bold,
+    fontWeight = FontWeight.Normal,
     fontSize = 12.sp,
     textAlign = TextAlign.Start,
-    color = ColorProvider(Color.White)
+    color = ColorProvider(Color.LightGray)
 )
 
 private const val PREFS_KEY_RECORD = "recordId"

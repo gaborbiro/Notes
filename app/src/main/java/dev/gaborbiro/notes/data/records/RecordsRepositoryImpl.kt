@@ -1,5 +1,7 @@
 package dev.gaborbiro.notes.data.records
 
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.Transformations
 import androidx.room.Transaction
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.data.records.domain.model.Record
@@ -15,7 +17,11 @@ class RecordsRepositoryImpl(
 ) : RecordsRepository {
 
     override suspend fun getRecords(): List<Record> {
-        return recordsDAO.get().map(mapper::map)
+        return mapper.map(recordsDAO.get())
+    }
+
+    override fun getRecordsLiveData(): LiveData<List<Record>> {
+        return Transformations.map(recordsDAO.getLiveData(), mapper::map)
     }
 
     override suspend fun saveTemplateAndRecord(
@@ -38,7 +44,7 @@ class RecordsRepositoryImpl(
 
     @Transaction
     override suspend fun getRecord(recordId: Long): Record? {
-        return recordsDAO.get(recordId)?.let { mapper.map(it) }
+        return recordsDAO.get(recordId)?.let(mapper::map)
     }
 
     override suspend fun delete(recordId: Long): Boolean {

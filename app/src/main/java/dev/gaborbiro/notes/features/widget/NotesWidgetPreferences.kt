@@ -17,7 +17,7 @@ object NotesWidgetPreferences : GlanceStateDefinition<Preferences> {
         return File(context.applicationContext.filesDir, "datastore/$fileName")
     }
 
-    private const val fileName = "notes.preferences"
+    private const val fileName = "notes_pb"
 
     private val Context.dataStore: DataStore<Preferences>
         by preferencesDataStore(name = fileName)

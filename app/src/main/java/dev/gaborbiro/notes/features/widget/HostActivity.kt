@@ -102,10 +102,6 @@ class HostActivity : AppCompatActivity() {
         private const val EXTRA_ACTION_TEXT_ONLY = "text_only"
     }
 
-    override fun onNewIntent(intent: Intent?) {
-        super.onNewIntent(intent)
-    }
-
     private val recordsRepository by lazy { RecordsRepository.get() }
     private val documentWriter by lazy { DocumentWriter(this) }
 
@@ -256,7 +252,7 @@ class HostActivity : AppCompatActivity() {
                 value = inputFieldValue.value,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text,
-                    capitalization = KeyboardCapitalization.Words,
+                    capitalization = KeyboardCapitalization.Sentences,
                     imeAction = ImeAction.Next
                 ),
                 onValueChange = {

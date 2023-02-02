@@ -13,8 +13,6 @@ class BitmapLoader(
 ) {
 
     fun uriToBitmap(uri: Uri): Bitmap {
-//        val readUriPermission: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION
-//        context.contentResolver.takePersistableUriPermission(uri, readUriPermission)
         return ImageDecoder.decodeBitmap(
             ImageDecoder.createSource(context.contentResolver, uri)
         )
