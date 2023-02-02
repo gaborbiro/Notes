@@ -53,7 +53,7 @@ class RecordsRepositoryImpl(
         return recordsDAO.delete(recordId) > 0
     }
 
-    override suspend fun updateTemplatePhoto(templateId: Long, uri: Uri): Boolean {
+    override suspend fun updateTemplatePhoto(templateId: Long, uri: Uri?): Boolean {
         return templatesDAO.get(templateId)?.let { oldTemplate ->
             templatesDAO.insertOrUpdate(
                 TemplateDBModel(

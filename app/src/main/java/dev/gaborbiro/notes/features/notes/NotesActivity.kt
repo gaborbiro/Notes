@@ -26,6 +26,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.HideImage
+import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -142,9 +144,14 @@ class MainActivity : ComponentActivity() {
             label = "Delete"
         ),
         PopUpMenuItem(
-            id = "retake_photo",
-            icon = Icons.Outlined.PhotoCamera,
-            label = "Edit photo"
+            id = "update_image",
+            icon = Icons.Outlined.Image,
+            label = "Edit image"
+        ),
+        PopUpMenuItem(
+            id = "delete_image",
+            icon = Icons.Outlined.HideImage,
+            label = "Delete image"
         ),
     )
 
@@ -160,8 +167,15 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            "retake_photo" -> {
+            "update_image" -> {
                 HostActivity.launchRedoImage(this, record.templateId)
+            }
+
+            "delete_image" -> {
+                lifecycle.coroutineScope.launch {
+                    recordsRepository.updateTemplatePhoto(record.templateId, uri = null)
+                    NotesWidgetsUpdater.oneOffUpdate(this@MainActivity)
+                }
             }
         }
     }
@@ -171,7 +185,7 @@ class MainActivity : ComponentActivity() {
         Card(
             modifier = modifier
                 .padding(start = PaddingDefault, end = PaddingDefault, top = PaddingDefault)
-                .height(130.dp),
+                .height(100.dp),
             elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -198,7 +212,7 @@ class MainActivity : ComponentActivity() {
                             .padding(start = PaddingDefault, end = PaddingDefault)
                             .weight(1f),
                         text = record.title,
-                        maxLines = 3,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.inverseSurface,
