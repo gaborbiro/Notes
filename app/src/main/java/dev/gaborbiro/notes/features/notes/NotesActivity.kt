@@ -48,7 +48,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -75,11 +74,13 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val records = recordsRepository.getRecordsLiveData()
+        val recordsUIModels = Transformations.map(records, mapper::map)
+
         setContent {
             NotesTheme {
                 Records(
-                    records = Transformations
-                        .map(recordsRepository.getRecordsLiveData(), mapper::map)
+                    records = recordsUIModels
                         .observeAsState(initial = emptyList())
                         .value
                 )

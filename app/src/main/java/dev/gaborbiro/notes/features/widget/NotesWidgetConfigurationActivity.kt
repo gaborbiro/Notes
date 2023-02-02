@@ -12,7 +12,9 @@ class NotesWidgetConfigurationActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        NotesWidgetsUpdater.oneOffUpdate(this)
+        // Necessary to force update the shared widget preferences, otherwise
+        // the new widget will use outdated preferences.
+        NotesWidgetsUpdater.oneOffUpdate(this)
 
         lifecycle.coroutineScope.launch {
             val appWidgetId = intent?.extras?.getInt(

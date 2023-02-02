@@ -21,9 +21,7 @@ import androidx.glance.layout.Alignment.Companion.CenterVertically
 import androidx.glance.layout.Column
 import androidx.glance.layout.ContentScale
 import androidx.glance.layout.Row
-import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxHeight
-import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
@@ -76,12 +74,37 @@ fun Records(
     }
 }
 
+//@Preview(name = "Light Mode")
+//@Preview(
+//    uiMode = Configuration.UI_MODE_NIGHT_YES,
+//    showBackground = true,
+//    name = "Dark Mode"
+//)
+//@Composable
+//fun CardPreview() {
+//    Record(
+//        RecordUIModel(
+//            id = 0,
+//            bitmap = null,
+//            timestamp = "yesterday at 12:05",
+//            title = "Bangers n' mash",
+//        )
+//    )
+//}
+
 @Composable
 fun Record(record: RecordUIModel) {
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
-            .padding(vertical = PaddingHalf),
+            .padding(vertical = PaddingHalf)
+            .clickable(
+                actionRunCallback<DuplicateNoteAction>(
+                    actionParametersOf(
+                        ActionParameters.Key<Long>(PREFS_KEY_RECORD) to record.id
+                    )
+                )
+            )
     ) {
         record.bitmap?.let { image: Bitmap ->
             Image(
@@ -93,45 +116,24 @@ fun Record(record: RecordUIModel) {
                 contentScale = ContentScale.Crop,
             )
         }
-        Spacer(modifier = GlanceModifier.width(PaddingDefault))
-        Row(
-            horizontalAlignment = Alignment.Horizontal.End,
-            verticalAlignment = CenterVertically,
+        Column(
             modifier = GlanceModifier
-                .fillMaxSize()
+                .defaultWeight()
+                .fillMaxHeight()
+                .padding(horizontal = PaddingDefault),
+            verticalAlignment = Alignment.Vertical.CenterVertically,
         ) {
-            Column(
+            Text(
+                text = record.title,
+                modifier = GlanceModifier,
+                maxLines = 2,
+                style = RecordTitleTextStyle
+            )
+            Text(
+                text = record.timestamp,
+                style = RecordDateTextStyle,
                 modifier = GlanceModifier
-                    .defaultWeight()
-            ) {
-                Text(
-                    text = record.title,
-                    modifier = GlanceModifier,
-                    maxLines = 2,
-                    style = RecordTitleTextStyle
-                )
-                Text(
-                    text = record.timestamp,
-                    style = RecordDateTextStyle,
-                    modifier = GlanceModifier
-                        .fillMaxWidth()
-                )
-            }
-            Image(
-                provider = ImageProvider(resId = R.drawable.ic_add),
-                contentDescription = "Add entry again",
-                modifier = GlanceModifier
-                    .defaultWeight()
-                    .width(36.dp)
-                    .fillMaxHeight()
-                    .padding(horizontal = PaddingDefault)
-                    .clickable(
-                        actionRunCallback<DuplicateNoteAction>(
-                            actionParametersOf(
-                                ActionParameters.Key<Long>(PREFS_KEY_RECORD) to record.id
-                            )
-                        )
-                    )
+                    .fillMaxWidth()
             )
         }
     }
