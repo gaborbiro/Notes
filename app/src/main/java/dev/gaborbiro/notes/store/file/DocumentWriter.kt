@@ -38,7 +38,7 @@ class DocumentWriter(
 
     fun getOrCreateFile(subPath: String?, fileName: String): Uri {
         val authority = "${appContext.packageName}.provider"
-        val dir = appContext.cacheDir
+        val dir = appContext.filesDir
         val separator = File.separator
         val filePath = "public$separator${subPath?.let { "$it$separator" } ?: ""}$fileName"
         return androidx.core.content.FileProvider.getUriForFile(

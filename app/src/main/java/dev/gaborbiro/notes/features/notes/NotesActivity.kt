@@ -45,8 +45,9 @@ import kotlinx.coroutines.launch
 
 class NotesActivity : ComponentActivity() {
 
-    private val recordsRepository by lazy { RecordsRepository.get() }
-    private val mapper: RecordsUIMapper by lazy { RecordsUIMapper(BitmapLoader(this)) }
+    private val recordsRepository by lazy { RecordsRepository.get(this) }
+    private val bitmapLoader: BitmapLoader by lazy { BitmapLoader(this) }
+    private val mapper: RecordsUIMapper by lazy { RecordsUIMapper(bitmapLoader) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

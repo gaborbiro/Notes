@@ -57,7 +57,8 @@ import dev.gaborbiro.notes.data.records.domain.model.ToSaveTemplate
 import dev.gaborbiro.notes.store.file.DocumentWriter
 import dev.gaborbiro.notes.ui.theme.NotesTheme
 import dev.gaborbiro.notes.ui.theme.PaddingDefault
-import dev.gaborbiro.notes.util.correctBitmapRotation
+import dev.gaborbiro.notes.util.BitmapLoader
+import dev.gaborbiro.notes.util.correctBitmap
 import dev.gaborbiro.notes.util.hideActionNotification
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -127,8 +128,9 @@ class HostActivity : AppCompatActivity() {
         private const val EXTRA_TEMPLATE_ID = "template_id"
     }
 
-    private val repository by lazy { RecordsRepository.get() }
+    private val repository by lazy { RecordsRepository.get(this) }
     private val documentWriter by lazy { DocumentWriter(this) }
+    private val bitmapLoader: BitmapLoader by lazy { BitmapLoader(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -175,15 +177,13 @@ class HostActivity : AppCompatActivity() {
                         val templateId = intent.getLongExtra(EXTRA_TEMPLATE_ID, -1L)
 
                         val launcher = rememberLauncherForActivityResult(
-                            contract = ActivityResultContracts.TakePicturePreview(),
-                            onResult = { bitmap ->
-                                bitmap
-                                    ?.let { onPhotoTaken(it, templateId) }
-                                    ?: run { finish() }
+                            contract = ActivityResultContracts.PickVisualMedia(),
+                            onResult = {
+                                updateImage(it, templateId)
                             }
                         )
                         SideEffect {
-                            launcher.launch(null)
+                            launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                         }
                     }
 
@@ -193,7 +193,7 @@ class HostActivity : AppCompatActivity() {
                         if (recordId != -1L) {
                             SideEffect {
                                 lifecycle.coroutineScope.launch {
-                                    if (RecordsRepository.get().delete(recordId)) {
+                                    if (repository.delete(recordId)) {
                                         Toast.makeText(
                                             this@HostActivity,
                                             "Deleted",
@@ -373,7 +373,7 @@ class HostActivity : AppCompatActivity() {
 
     private fun onPhotoTaken(bitmap: Bitmap?) {
         lifecycle.coroutineScope.launch {
-            val uri: Uri? = bitmap?.let { persistBitmap(it) }
+            val uri: Uri? = bitmap?.let { persistBitmap(it, correctRotation = true) }
             setContent {
                 ShowNoteEntryDialog { title, description, error ->
                     lifecycle.coroutineScope.launch {
@@ -391,23 +391,13 @@ class HostActivity : AppCompatActivity() {
         }
     }
 
-    private fun onPhotoTaken(bitmap: Bitmap, templateId: Long) {
+    private fun updateImage(image: Uri?, templateId: Long) {
         lifecycle.coroutineScope.launch {
-            val uri = persistBitmap(bitmap)
+            val uri = image?.let { persistContent(image) }
             repository.updateTemplatePhoto(templateId, uri)
             NotesWidgetsUpdater.oneOffUpdate(this@HostActivity)
             finish()
         }
-    }
-
-    private suspend fun persistBitmap(bitmap: Bitmap): Uri {
-        val correctedBitmap = correctBitmapRotation(display!!, bitmap)
-        val uri = ByteArrayOutputStream().let { stream ->
-            correctedBitmap.compress(Bitmap.CompressFormat.PNG, 0, stream)
-            val inStream = ByteArrayInputStream(stream.toByteArray())
-            documentWriter.write(inStream, "${System.currentTimeMillis()}.png")
-        }
-        return uri
     }
 
     private fun onImagePicked(image: Uri?) {
@@ -420,15 +410,28 @@ class HostActivity : AppCompatActivity() {
                             error.value = it
                         }
                         ?: run {
-                            createNote(image, title, description)
+                            val cachedUri = image?.let { persistContent(image) }
+                            createNote(cachedUri, title, description)
                         }
                 }
             }
         }
     }
 
-    private fun createNote(image: Bitmap, name: String, description: String) {
+    private suspend fun persistContent(uri: Uri): Uri? {
+        return bitmapLoader.loadBitmap(uri)?.let {
+            persistBitmap(it, false)
+        }
+    }
 
+    private suspend fun persistBitmap(bitmap: Bitmap, correctRotation: Boolean): Uri {
+        val correctedBitmap = correctBitmap(display!!, bitmap, correctRotation, correctWidth = true)
+        val uri = ByteArrayOutputStream().let { stream ->
+            correctedBitmap.compress(Bitmap.CompressFormat.PNG, 0, stream)
+            val inStream = ByteArrayInputStream(stream.toByteArray())
+            documentWriter.write(inStream, "${System.currentTimeMillis()}.png")
+        }
+        return uri
     }
 
     private suspend fun validate(title: String, description: String): String? {

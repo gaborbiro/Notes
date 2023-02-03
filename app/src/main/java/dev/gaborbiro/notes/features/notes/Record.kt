@@ -76,7 +76,7 @@ private fun onMenuItemSelected(
     when (menuId) {
         "delete" -> {
             coroutineScope.launch {
-                RecordsRepository.get().delete(record.recordId)
+                RecordsRepository.get(context).delete(record.recordId)
                 NotesWidgetsUpdater.oneOffUpdate(context)
             }
         }
@@ -87,7 +87,7 @@ private fun onMenuItemSelected(
 
         "delete_image" -> {
             coroutineScope.launch {
-                RecordsRepository.get().updateTemplatePhoto(record.templateId, uri = null)
+                RecordsRepository.get(context).updateTemplatePhoto(record.templateId, uri = null)
                 NotesWidgetsUpdater.oneOffUpdate(context)
             }
         }
@@ -116,8 +116,10 @@ fun Record(
                     .size(64.dp)
                     .clip(RoundedCornerShape(10.dp))
             )
-            Spacer(modifier = Modifier.size(PaddingDefault))
+        } ?: run {
+            Spacer(modifier = Modifier.size(64.dp))
         }
+        Spacer(modifier = Modifier.size(PaddingDefault))
         Column(
             modifier = Modifier
                 .wrapContentHeight()

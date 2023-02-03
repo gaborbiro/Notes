@@ -1,5 +1,6 @@
 package dev.gaborbiro.notes.data.records.domain
 
+import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.LiveData
 import dev.gaborbiro.notes.data.records.DBMapper
@@ -9,6 +10,7 @@ import dev.gaborbiro.notes.data.records.domain.model.Template
 import dev.gaborbiro.notes.data.records.domain.model.ToSaveRecord
 import dev.gaborbiro.notes.data.records.domain.model.ToSaveTemplate
 import dev.gaborbiro.notes.store.db.AppDatabase
+import dev.gaborbiro.notes.store.file.DocumentDeleter
 
 interface RecordsRepository {
 
@@ -16,12 +18,13 @@ interface RecordsRepository {
 
         private lateinit var INSTANCE: RecordsRepository
 
-        fun get(): RecordsRepository {
+        fun get(appContext: Context): RecordsRepository {
             if (!::INSTANCE.isInitialized) {
                 INSTANCE = RecordsRepositoryImpl(
                     templatesDAO = AppDatabase.getInstance().templatesDAO(),
                     recordsDAO = AppDatabase.getInstance().recordsDAO(),
                     mapper = DBMapper.get(),
+                    documentDeleter = DocumentDeleter(appContext)
                 )
             }
             return INSTANCE
@@ -41,6 +44,8 @@ interface RecordsRepository {
     suspend fun getRecord(recordId: Long): Record?
 
     suspend fun delete(recordId: Long): Boolean
-    suspend fun updateTemplatePhoto(templateId: Long, uri: Uri?): Boolean
+
+    suspend fun updateTemplatePhoto(templateId: Long, uri: Uri?)
+
     suspend fun getTemplatesByName(name: String): List<Template>
 }

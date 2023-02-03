@@ -12,11 +12,13 @@ import dev.gaborbiro.notes.data.records.domain.model.ToSaveTemplate
 import dev.gaborbiro.notes.store.db.records.RecordsDAO
 import dev.gaborbiro.notes.store.db.records.TemplatesDAO
 import dev.gaborbiro.notes.store.db.records.model.TemplateDBModel
+import dev.gaborbiro.notes.store.file.DocumentDeleter
 
 class RecordsRepositoryImpl(
     private val templatesDAO: TemplatesDAO,
     private val recordsDAO: RecordsDAO,
     private val mapper: DBMapper,
+    private val documentDeleter: DocumentDeleter,
 ) : RecordsRepository {
 
     override suspend fun getRecords(): List<Record> {
@@ -58,12 +60,13 @@ class RecordsRepositoryImpl(
             allTemplates.filter { t -> allRecords.none { it.template.id == t.id } }
         unusedTemplates.forEach {
             templatesDAO.delete(it)
+            it.image?.let { documentDeleter.delete(it) }
         }
         return deleted
     }
 
-    override suspend fun updateTemplatePhoto(templateId: Long, uri: Uri?): Boolean {
-        return templatesDAO.get(templateId)?.let { oldTemplate ->
+    override suspend fun updateTemplatePhoto(templateId: Long, uri: Uri?) {
+        templatesDAO.get(templateId)?.let { oldTemplate ->
             templatesDAO.insertOrUpdate(
                 TemplateDBModel(
                     image = uri,
@@ -72,8 +75,11 @@ class RecordsRepositoryImpl(
                 ).also {
                     it.id = templateId
                 }
-            ) >= 0
-        } == true
+            )
+            if (oldTemplate.image != null) {
+                documentDeleter.delete(oldTemplate.image)
+            }
+        }
     }
 
     override suspend fun getTemplatesByName(name: String): List<Template> {

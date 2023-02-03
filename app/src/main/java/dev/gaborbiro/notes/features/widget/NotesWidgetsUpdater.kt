@@ -63,7 +63,7 @@ class NotesWidgetsUpdater(appContext: Context, workerParameters: WorkerParameter
     override suspend fun doWork(): Result {
         println("NotesWidget doWork")
         return try {
-            val records: List<Record> = RecordsRepository.get().getRecords()
+            val records: List<Record> = RecordsRepository.get(applicationContext).getRecords()
             sendToWidgets(applicationContext, records)
             Result.success()
         } catch (t: Throwable) {

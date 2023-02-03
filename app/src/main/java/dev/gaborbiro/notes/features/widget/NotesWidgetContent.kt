@@ -21,11 +21,11 @@ import androidx.glance.layout.Alignment.Companion.CenterVertically
 import androidx.glance.layout.Column
 import androidx.glance.layout.ContentScale
 import androidx.glance.layout.Row
+import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxHeight
 import androidx.glance.layout.fillMaxWidth
-import androidx.glance.layout.height
 import androidx.glance.layout.padding
-import androidx.glance.layout.width
+import androidx.glance.layout.size
 import androidx.glance.layout.wrapContentHeight
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
@@ -89,16 +89,19 @@ fun Record(record: RecordUIModel) {
                 )
             )
     ) {
-        record.bitmap?.let { image: Bitmap ->
-            Image(
-                provider = ImageProvider(image),
-                contentDescription = "note image",
-                modifier = GlanceModifier
-                    .width(60.dp)
-                    .height(60.dp),
-                contentScale = ContentScale.Crop,
-            )
-        }
+        record.bitmap
+            ?.let { image: Bitmap ->
+                Image(
+                    provider = ImageProvider(image),
+                    contentDescription = "note image",
+                    modifier = GlanceModifier
+                        .size(60.dp),
+                    contentScale = ContentScale.Crop,
+                )
+            }
+            ?: run {
+                Spacer(modifier = GlanceModifier.size(60.dp))
+            }
         Column(
             modifier = GlanceModifier
                 .defaultWeight()
@@ -202,7 +205,7 @@ class DuplicateNoteAction : ActionCallback {
         parameters: ActionParameters
     ) {
         val recordId = parameters[ActionParameters.Key<Long>(PREFS_KEY_RECORD)]!!
-        val newRecordId = RecordsRepository.get().duplicateRecord(recordId, "")
+        val newRecordId = RecordsRepository.get(context).duplicateRecord(recordId, "")
         NotesWidgetsUpdater.oneOffUpdate(context)
         context.showActionNotification(
             title = "Undo - duplicate record",

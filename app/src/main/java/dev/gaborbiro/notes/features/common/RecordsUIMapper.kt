@@ -18,7 +18,7 @@ class RecordsUIMapper(
     }
 
     private fun map(record: Record): RecordUIModel {
-        val bitmap: Bitmap? = record.template.image?.let { bitmapLoader.uriToBitmap(it) }
+        val bitmap: Bitmap? = record.template.image?.let { bitmapLoader.loadBitmap(it) }
         val timestamp = record.timestamp
         val timestampStr = when {
             !timestamp.isBefore(LocalDateTime.now().truncatedTo(ChronoUnit.DAYS)) -> {
