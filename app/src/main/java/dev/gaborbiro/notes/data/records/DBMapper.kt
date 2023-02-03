@@ -1,17 +1,20 @@
 package dev.gaborbiro.notes.data.records
 
 import dev.gaborbiro.notes.data.records.domain.model.Record
+import dev.gaborbiro.notes.data.records.domain.model.Template
 import dev.gaborbiro.notes.data.records.domain.model.ToSaveRecord
 import dev.gaborbiro.notes.data.records.domain.model.ToSaveTemplate
 import dev.gaborbiro.notes.store.db.records.model.RecordAndTemplateDBModel
 import dev.gaborbiro.notes.store.db.records.model.RecordDBModel
 import dev.gaborbiro.notes.store.db.records.model.TemplateDBModel
 
-interface RecordsMapper {
+interface DBMapper {
 
     companion object {
-        fun get(): RecordsMapper = RecordsMapperImpl()
+        fun get(): DBMapper = DBMapperImpl()
     }
+
+    fun map(template: TemplateDBModel): Template
 
     fun map(records: List<RecordAndTemplateDBModel>): List<Record>
 

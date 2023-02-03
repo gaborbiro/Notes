@@ -2,9 +2,10 @@ package dev.gaborbiro.notes.data.records.domain
 
 import android.net.Uri
 import androidx.lifecycle.LiveData
-import dev.gaborbiro.notes.data.records.RecordsMapper
+import dev.gaborbiro.notes.data.records.DBMapper
 import dev.gaborbiro.notes.data.records.RecordsRepositoryImpl
 import dev.gaborbiro.notes.data.records.domain.model.Record
+import dev.gaborbiro.notes.data.records.domain.model.Template
 import dev.gaborbiro.notes.data.records.domain.model.ToSaveRecord
 import dev.gaborbiro.notes.data.records.domain.model.ToSaveTemplate
 import dev.gaborbiro.notes.store.db.AppDatabase
@@ -20,7 +21,7 @@ interface RecordsRepository {
                 INSTANCE = RecordsRepositoryImpl(
                     templatesDAO = AppDatabase.getInstance().templatesDAO(),
                     recordsDAO = AppDatabase.getInstance().recordsDAO(),
-                    mapper = RecordsMapper.get(),
+                    mapper = DBMapper.get(),
                 )
             }
             return INSTANCE
@@ -41,4 +42,5 @@ interface RecordsRepository {
 
     suspend fun delete(recordId: Long): Boolean
     suspend fun updateTemplatePhoto(templateId: Long, uri: Uri?): Boolean
+    suspend fun getTemplatesByName(name: String): List<Template>
 }

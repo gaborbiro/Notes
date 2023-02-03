@@ -9,9 +9,9 @@ import dev.gaborbiro.notes.store.db.records.model.RecordDBModel
 import dev.gaborbiro.notes.store.db.records.model.TemplateDBModel
 import java.time.LocalDateTime
 
-class RecordsMapperImpl : RecordsMapper {
+class DBMapperImpl : DBMapper {
 
-    private fun map(template: TemplateDBModel): Template {
+    override fun map(template: TemplateDBModel): Template {
         return Template(
             id = template.id!!,
             image = template.image,

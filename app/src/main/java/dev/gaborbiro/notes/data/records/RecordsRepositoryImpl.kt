@@ -6,6 +6,7 @@ import androidx.lifecycle.Transformations
 import androidx.room.Transaction
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.data.records.domain.model.Record
+import dev.gaborbiro.notes.data.records.domain.model.Template
 import dev.gaborbiro.notes.data.records.domain.model.ToSaveRecord
 import dev.gaborbiro.notes.data.records.domain.model.ToSaveTemplate
 import dev.gaborbiro.notes.store.db.records.RecordsDAO
@@ -15,7 +16,7 @@ import dev.gaborbiro.notes.store.db.records.model.TemplateDBModel
 class RecordsRepositoryImpl(
     private val templatesDAO: TemplatesDAO,
     private val recordsDAO: RecordsDAO,
-    private val mapper: RecordsMapper,
+    private val mapper: DBMapper,
 ) : RecordsRepository {
 
     override suspend fun getRecords(): List<Record> {
@@ -50,7 +51,15 @@ class RecordsRepositoryImpl(
     }
 
     override suspend fun delete(recordId: Long): Boolean {
-        return recordsDAO.delete(recordId) > 0
+        val deleted = recordsDAO.delete(recordId) > 0
+        val allRecords = recordsDAO.get()
+        val allTemplates = templatesDAO.get()
+        val unusedTemplates =
+            allTemplates.filter { t -> allRecords.none { it.template.id == t.id } }
+        unusedTemplates.forEach {
+            templatesDAO.delete(it)
+        }
+        return deleted
     }
 
     override suspend fun updateTemplatePhoto(templateId: Long, uri: Uri?): Boolean {
@@ -65,5 +74,9 @@ class RecordsRepositoryImpl(
                 }
             ) >= 0
         } == true
+    }
+
+    override suspend fun getTemplatesByName(name: String): List<Template> {
+        return templatesDAO.get(name).map(mapper::map)
     }
 }

@@ -35,8 +35,9 @@ import androidx.glance.unit.ColorProvider
 import dev.gaborbiro.notes.R
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.features.common.model.RecordUIModel
-import dev.gaborbiro.notes.ui.theme.PaddingDefault
-import dev.gaborbiro.notes.ui.theme.PaddingHalf
+import dev.gaborbiro.notes.ui.theme.PaddingDefaultWidget
+import dev.gaborbiro.notes.ui.theme.PaddingHalfWidget
+import dev.gaborbiro.notes.util.showActionNotification
 
 @Composable
 fun NotesWidgetContent(
@@ -74,30 +75,12 @@ fun Records(
     }
 }
 
-//@Preview(name = "Light Mode")
-//@Preview(
-//    uiMode = Configuration.UI_MODE_NIGHT_YES,
-//    showBackground = true,
-//    name = "Dark Mode"
-//)
-//@Composable
-//fun CardPreview() {
-//    Record(
-//        RecordUIModel(
-//            id = 0,
-//            bitmap = null,
-//            timestamp = "yesterday at 12:05",
-//            title = "Bangers n' mash",
-//        )
-//    )
-//}
-
 @Composable
 fun Record(record: RecordUIModel) {
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
-            .padding(vertical = PaddingHalf)
+            .padding(vertical = PaddingHalfWidget)
             .clickable(
                 actionRunCallback<DuplicateNoteAction>(
                     actionParametersOf(
@@ -120,7 +103,7 @@ fun Record(record: RecordUIModel) {
             modifier = GlanceModifier
                 .defaultWeight()
                 .fillMaxHeight()
-                .padding(horizontal = PaddingDefault),
+                .padding(horizontal = PaddingDefaultWidget),
             verticalAlignment = Alignment.Vertical.CenterVertically,
         ) {
             Text(
@@ -219,8 +202,14 @@ class DuplicateNoteAction : ActionCallback {
         parameters: ActionParameters
     ) {
         val recordId = parameters[ActionParameters.Key<Long>(PREFS_KEY_RECORD)]!!
-        RecordsRepository.get().duplicateRecord(recordId, "")
+        val newRecordId = RecordsRepository.get().duplicateRecord(recordId, "")
         NotesWidgetsUpdater.oneOffUpdate(context)
+        context.showActionNotification(
+            title = "Undo - duplicate record",
+            action = "Undo",
+            actionIcon = R.drawable.ic_undo,
+            actionIntent = HostActivity.getDeleteIntent(context, newRecordId)
+        )
     }
 }
 
