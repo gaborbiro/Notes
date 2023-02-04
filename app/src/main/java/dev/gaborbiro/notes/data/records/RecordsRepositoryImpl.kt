@@ -26,7 +26,9 @@ class RecordsRepositoryImpl(
     }
 
     override fun getRecordsLiveData(): LiveData<List<Record>> {
-        return Transformations.map(recordsDAO.getLiveData(), mapper::map)
+        return recordsDAO.getLiveData()
+            .let { Transformations.map(it, mapper::map) }
+            .let { Transformations.distinctUntilChanged(it) }
     }
 
     override suspend fun saveRecord(

@@ -1,4 +1,4 @@
-package dev.gaborbiro.notes.features.widget
+package dev.gaborbiro.notes.features.host
 
 import android.content.Context
 import android.content.Intent
@@ -54,6 +54,7 @@ import androidx.lifecycle.coroutineScope
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.data.records.domain.model.ToSaveRecord
 import dev.gaborbiro.notes.data.records.domain.model.ToSaveTemplate
+import dev.gaborbiro.notes.features.widget.NotesWidgetsUpdater
 import dev.gaborbiro.notes.store.file.DocumentWriter
 import dev.gaborbiro.notes.ui.theme.NotesTheme
 import dev.gaborbiro.notes.ui.theme.PaddingDefault
@@ -71,7 +72,7 @@ class HostActivity : AppCompatActivity() {
 
     companion object {
 
-        fun getDeleteIntent(context: Context, recordId: Long): Intent {
+        fun getDeleteRecordIntent(context: Context, recordId: Long): Intent {
             return Intent(context, HostActivity::class.java).also {
                 it.putExtra(EXTRA_ACTION, ACTION_DELETE)
                 it.putExtra(EXTRA_RECORD_ID, recordId)
@@ -80,16 +81,22 @@ class HostActivity : AppCompatActivity() {
         }
 
         fun launchAddNoteWithCamera(context: Context) {
-            launchActivity(context, getActionIntent(context, ACTION_CAMERA))
+            launchActivity(context, getCameraIntent(context))
         }
+
+        fun getCameraIntent(context: Context) = getActionIntent(context, ACTION_CAMERA)
 
         fun launchAddNoteWithImage(context: Context) {
-            launchActivity(context, getActionIntent(context, ACTION_IMAGE))
+            launchActivity(context, getImagePickerIntent(context))
         }
 
+        fun getImagePickerIntent(context: Context) = getActionIntent(context, ACTION_PICK_IMAGE)
+
         fun launchAddNote(context: Context) {
-            launchActivity(context, getActionIntent(context, ACTION_TEXT_ONLY))
+            launchActivity(context, getTextOnlyIntent(context))
         }
+
+        fun getTextOnlyIntent(context: Context) = getActionIntent(context, ACTION_TEXT_ONLY)
 
         fun launchRedoImage(context: Context, templateId: Long) {
             launchActivity(
@@ -118,7 +125,7 @@ class HostActivity : AppCompatActivity() {
         private const val EXTRA_ACTION = "extra_action"
 
         private const val ACTION_CAMERA = "camera"
-        private const val ACTION_IMAGE = "image"
+        private const val ACTION_PICK_IMAGE = "pick_image"
         private const val ACTION_TEXT_ONLY = "text_only"
 
         private const val ACTION_DELETE = "delete"
@@ -128,7 +135,7 @@ class HostActivity : AppCompatActivity() {
         private const val EXTRA_TEMPLATE_ID = "template_id"
     }
 
-    private val repository by lazy { RecordsRepository.get(this) }
+    private val repository by lazy { RecordsRepository.get() }
     private val documentWriter by lazy { DocumentWriter(this) }
     private val bitmapLoader: BitmapLoader by lazy { BitmapLoader(this) }
 
@@ -148,7 +155,7 @@ class HostActivity : AppCompatActivity() {
                         }
                     }
 
-                    ACTION_IMAGE -> {
+                    ACTION_PICK_IMAGE -> {
                         val launcher = rememberLauncherForActivityResult(
                             contract = ActivityResultContracts.PickVisualMedia(),
                             onResult = ::onImagePicked

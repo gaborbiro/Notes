@@ -1,8 +1,8 @@
 package dev.gaborbiro.notes.data.records.domain
 
-import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.LiveData
+import dev.gaborbiro.notes.App
 import dev.gaborbiro.notes.data.records.DBMapper
 import dev.gaborbiro.notes.data.records.RecordsRepositoryImpl
 import dev.gaborbiro.notes.data.records.domain.model.Record
@@ -18,13 +18,13 @@ interface RecordsRepository {
 
         private lateinit var INSTANCE: RecordsRepository
 
-        fun get(appContext: Context): RecordsRepository {
+        fun get(): RecordsRepository {
             if (!::INSTANCE.isInitialized) {
                 INSTANCE = RecordsRepositoryImpl(
                     templatesDAO = AppDatabase.getInstance().templatesDAO(),
                     recordsDAO = AppDatabase.getInstance().recordsDAO(),
                     mapper = DBMapper.get(),
-                    documentDeleter = DocumentDeleter(appContext)
+                    documentDeleter = DocumentDeleter(App.appContext)
                 )
             }
             return INSTANCE

@@ -1,4 +1,3 @@
-import android.content.Context
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -26,7 +25,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,126 +37,109 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.gaborbiro.notes.R
-import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.features.common.model.RecordUIModel
-import dev.gaborbiro.notes.features.widget.HostActivity
-import dev.gaborbiro.notes.features.widget.NotesWidgetsUpdater
 import dev.gaborbiro.notes.ui.theme.PaddingDefault
 import dev.gaborbiro.notes.ui.theme.PaddingQuarter
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
-private val menuItems = listOf(
-    PopUpMenuItem(
-        id = "update_image",
-        icon = Icons.Outlined.Image,
-        label = "Edit image"
-    ),
-    PopUpMenuItem(
-        id = "delete_image",
-        icon = Icons.Outlined.HideImage,
-        label = "Delete image",
-        hasBottomDivider = true,
-    ),
-    PopUpMenuItem(
-        id = "delete",
-        icon = Icons.Outlined.Delete,
-        label = "Delete"
-    ),
-)
-
-private fun onMenuItemSelected(
-    context: Context,
-    coroutineScope: CoroutineScope,
-    record: RecordUIModel,
-    menuId: String,
-) {
-    when (menuId) {
-        "delete" -> {
-            coroutineScope.launch {
-                RecordsRepository.get(context).delete(record.recordId)
-                NotesWidgetsUpdater.oneOffUpdate(context)
-            }
-        }
-
-        "update_image" -> {
-            HostActivity.launchRedoImage(context, record.templateId)
-        }
-
-        "delete_image" -> {
-            coroutineScope.launch {
-                RecordsRepository.get(context).updateTemplatePhoto(record.templateId, uri = null)
-                NotesWidgetsUpdater.oneOffUpdate(context)
-            }
-        }
-    }
-}
 
 @Composable
-fun Record(
-    context: Context,
+fun RecordView(
+    modifier: Modifier = Modifier,
     record: RecordUIModel,
-    modifier: Modifier = Modifier
+    onUpdateImage: () -> Unit,
+    onDeleteImage: () -> Unit,
+    onDeleteRecord: () -> Unit,
 ) {
-    val coroutineScope = rememberCoroutineScope()
     Row(
         modifier = modifier
             .padding(start = PaddingDefault, end = PaddingDefault)
             .wrapContentHeight(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        record.bitmap?.let { bitmap: Bitmap ->
-            Image(
-                painter = BitmapPainter(bitmap.asImageBitmap()),
-                contentScale = ContentScale.Crop,
-                contentDescription = "note image",
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(RoundedCornerShape(10.dp))
-            )
-        } ?: run {
-            Spacer(modifier = Modifier.size(64.dp))
-        }
+        RecordImage(record.bitmap, Modifier.size(64.dp))
         Spacer(modifier = Modifier.size(PaddingDefault))
-        Column(
+        TitleAndSubtitle(
             modifier = Modifier
                 .wrapContentHeight()
                 .padding(end = PaddingDefault)
                 .weight(1f),
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Text(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                text = record.title,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-            )
-            Text(
-                text = record.timestamp,
-                color = Color.Gray,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier
-                    .padding(top = PaddingQuarter)
-            )
-        }
-        PopUpMenuButton(
-            options = menuItems,
-            action = {
-                onMenuItemSelected(context, coroutineScope, record, it)
-            },
+            record = record
+        )
+        PopupMenu(onUpdateImage, onDeleteImage, onDeleteRecord)
+    }
+}
+
+@Composable
+private fun RecordImage(bitmap: Bitmap?, modifier: Modifier) {
+    bitmap?.let {
+        Image(
+            painter = BitmapPainter(bitmap.asImageBitmap()),
+            contentScale = ContentScale.Crop,
+            contentDescription = "note image",
+            modifier = modifier
+                .clip(RoundedCornerShape(10.dp))
+        )
+    } ?: run {
+        Spacer(modifier)
+    }
+}
+
+@Composable
+private fun TitleAndSubtitle(modifier: Modifier, record: RecordUIModel) {
+    Column(
+        modifier,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(
             modifier = Modifier
+                .fillMaxWidth(),
+            text = record.title,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
+        )
+        Text(
+            text = record.timestamp,
+            color = Color.Gray,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier
+                .padding(top = PaddingQuarter)
         )
     }
 }
 
 @Composable
-fun PopUpMenuButton(
+private fun PopupMenu(
+    onUpdateImage: () -> Unit,
+    onDeleteImage: () -> Unit,
+    onDeleteRecord: () -> Unit,
+) {
+    PopUpMenuButton(
+        options = listOf(
+            PopUpMenuItem(
+                icon = Icons.Outlined.Image,
+                label = "Update image",
+                onMenuItemSelected = onUpdateImage,
+            ),
+            PopUpMenuItem(
+                icon = Icons.Outlined.HideImage,
+                label = "Delete image",
+                hasBottomDivider = true,
+                onMenuItemSelected = onDeleteImage,
+            ),
+            PopUpMenuItem(
+                icon = Icons.Outlined.Delete,
+                label = "Delete",
+                onMenuItemSelected = onDeleteRecord,
+            ),
+        ),
+    )
+}
+
+@Composable
+private fun PopUpMenuButton(
     options: List<PopUpMenuItem>,
-    action: (String) -> Unit,
-    modifier: Modifier
 ) {
 
     val expanded = remember { mutableStateOf(false) }
@@ -177,7 +158,7 @@ fun PopUpMenuButton(
             }
         }
 
-        Box(modifier = modifier) {
+        Box {
             DropdownMenu(
                 expanded = expanded.value,
                 onDismissRequest = { expanded.value = false },
@@ -188,7 +169,7 @@ fun PopUpMenuButton(
                     DropdownMenuItem(
                         onClick = {
                             expanded.value = false
-                            action(item.id)
+                            item.onMenuItemSelected()
                         },
                         text = {
                             Text(
@@ -216,8 +197,8 @@ fun PopUpMenuButton(
 }
 
 data class PopUpMenuItem(
-    val id: String,
     val label: String,
     val icon: ImageVector,
     val hasBottomDivider: Boolean = false,
+    val onMenuItemSelected: () -> Unit,
 )

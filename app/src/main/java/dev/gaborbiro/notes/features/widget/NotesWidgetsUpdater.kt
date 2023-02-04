@@ -15,12 +15,14 @@ import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.data.records.domain.model.Record
 import dev.gaborbiro.notes.util.gson
 
-class NotesWidgetsUpdater(appContext: Context, workerParameters: WorkerParameters) :
-    CoroutineWorker(appContext, workerParameters) {
+class NotesWidgetsUpdater(
+    appContext: Context,
+    workerParameters: WorkerParameters
+) : CoroutineWorker(appContext, workerParameters) {
 
     companion object {
 
-        private const val UNIQUE_WORK_NAME = "widget_update"
+        private const val UNIQUE_WORK_NAME = "dev.gaborbiro.notes.widget_update"
 
         fun oneOffUpdate(context: Context) {
             WorkManager.getInstance(context)
@@ -40,7 +42,6 @@ class NotesWidgetsUpdater(appContext: Context, workerParameters: WorkerParameter
             val glanceIds = GlanceAppWidgetManager(context)
                 .getGlanceIds(NotesWidget::class.java)
             val recordsJson = gson.toJson(records)
-            println("NotesWidget sendToWidgets ${glanceIds.size} widgets, ${records.size} records")
             glanceIds.forEach { glanceId ->
                 updateAppWidgetState(context, glanceId) { prefs ->
                     prefs[stringPreferencesKey(NotesWidget.PREFS_ENTRIES)] = recordsJson
@@ -48,22 +49,11 @@ class NotesWidgetsUpdater(appContext: Context, workerParameters: WorkerParameter
             }
             NotesWidget().updateAll(context)
         }
-
-        fun retrieveRecords(preferences: Preferences): List<Record> {
-            val recordsJSON = preferences[stringPreferencesKey(NotesWidget.PREFS_ENTRIES)]
-            return recordsJSON
-                ?.let {
-                    val itemType = object : TypeToken<List<Record>>() {}.type
-                    gson.fromJson(recordsJSON, itemType)
-                }
-                ?: emptyList()
-        }
     }
 
     override suspend fun doWork(): Result {
-        println("NotesWidget doWork")
         return try {
-            val records: List<Record> = RecordsRepository.get(applicationContext).getRecords()
+            val records: List<Record> = RecordsRepository.get().getRecords()
             sendToWidgets(applicationContext, records)
             Result.success()
         } catch (t: Throwable) {
@@ -73,6 +63,15 @@ class NotesWidgetsUpdater(appContext: Context, workerParameters: WorkerParameter
     }
 }
 
+fun Preferences.retrieveRecords(): List<Record> {
+    val recordsJSON = this[stringPreferencesKey(NotesWidget.PREFS_ENTRIES)]
+    return recordsJSON
+        ?.let {
+            val itemType = object : TypeToken<List<Record>>() {}.type
+            gson.fromJson(recordsJSON, itemType)
+        }
+        ?: emptyList()
+}
 
 //        suspend fun startUpdate(context: Context) {
 //            val widgetCount =
