@@ -43,7 +43,7 @@ interface RecordsRepository {
 
     suspend fun getRecord(recordId: Long): Record?
 
-    suspend fun delete(recordId: Long): Boolean
+    suspend fun deleteRecord(recordId: Long): Boolean
 
     suspend fun updateTemplatePhoto(templateId: Long, uri: Uri?)
 

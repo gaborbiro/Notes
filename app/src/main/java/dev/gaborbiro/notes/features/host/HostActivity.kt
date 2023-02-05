@@ -80,22 +80,16 @@ class HostActivity : AppCompatActivity() {
             }
         }
 
-        fun launchAddNoteWithCamera(context: Context) {
+        fun launchAddNoteWithCamera(context: Context) =
             launchActivity(context, getCameraIntent(context))
-        }
+
+        fun launchAddNoteWithImage(context: Context) =
+            launchActivity(context, getImagePickerIntent(context))
+
+        fun launchAddNote(context: Context) = launchActivity(context, getTextOnlyIntent(context))
 
         fun getCameraIntent(context: Context) = getActionIntent(context, ACTION_CAMERA)
-
-        fun launchAddNoteWithImage(context: Context) {
-            launchActivity(context, getImagePickerIntent(context))
-        }
-
         fun getImagePickerIntent(context: Context) = getActionIntent(context, ACTION_PICK_IMAGE)
-
-        fun launchAddNote(context: Context) {
-            launchActivity(context, getTextOnlyIntent(context))
-        }
-
         fun getTextOnlyIntent(context: Context) = getActionIntent(context, ACTION_TEXT_ONLY)
 
         fun launchRedoImage(context: Context, templateId: Long) {
@@ -145,52 +139,19 @@ class HostActivity : AppCompatActivity() {
             NotesTheme {
                 val action = intent.getStringExtra(EXTRA_ACTION)
                 when (action) {
-                    ACTION_CAMERA -> {
-                        val launcher = rememberLauncherForActivityResult(
-                            contract = ActivityResultContracts.TakePicturePreview(),
-                            onResult = this::onPhotoTaken
-                        )
-                        SideEffect {
-                            launcher.launch(null)
-                        }
-                    }
-
-                    ACTION_PICK_IMAGE -> {
-                        val launcher = rememberLauncherForActivityResult(
-                            contract = ActivityResultContracts.PickVisualMedia(),
-                            onResult = ::onImagePicked
-                        )
-                        SideEffect {
-                            launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                        }
-                    }
-
-                    ACTION_TEXT_ONLY -> {
-                        ShowNoteEntryDialog { title, description, error ->
-                            lifecycle.coroutineScope.launch {
-                                val errorMessage = validate(title, description)
-                                errorMessage
-                                    ?.let {
-                                        error.value = it
-                                    }
-                                    ?: run {
-                                        createNote(image = null, title, description)
-                                    }
-                            }
-                        }
+                    ACTION_CAMERA -> LaunchCamera(::onPhotoTaken)
+                    ACTION_PICK_IMAGE -> LaunchImagePicker(::onImagePicked)
+                    ACTION_TEXT_ONLY -> showRecordEntryDialog { title, description ->
+                        createNote(null, title, description)
                     }
 
                     ACTION_REDO_IMAGE -> {
                         val templateId = intent.getLongExtra(EXTRA_TEMPLATE_ID, -1L)
 
-                        val launcher = rememberLauncherForActivityResult(
-                            contract = ActivityResultContracts.PickVisualMedia(),
-                            onResult = {
+                        if (templateId != -1L) {
+                            LaunchImagePicker {
                                 updateImage(it, templateId)
                             }
-                        )
-                        SideEffect {
-                            launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                         }
                     }
 
@@ -198,20 +159,7 @@ class HostActivity : AppCompatActivity() {
                         val recordId = intent.getLongExtra(EXTRA_RECORD_ID, -1L)
 
                         if (recordId != -1L) {
-                            SideEffect {
-                                lifecycle.coroutineScope.launch {
-                                    if (repository.delete(recordId)) {
-                                        Toast.makeText(
-                                            this@HostActivity,
-                                            "Deleted",
-                                            Toast.LENGTH_SHORT
-                                        )
-                                            .show()
-                                        NotesWidgetsUpdater.oneOffUpdate(this@HostActivity)
-                                        finish()
-                                    }
-                                }
-                            }
+                            DeleteRecord(recordId)
                         }
                         hideActionNotification()
                     }
@@ -224,6 +172,40 @@ class HostActivity : AppCompatActivity() {
                         ).show()
                         finish()
                     }
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun LaunchCamera(onPhotoTaken: (Bitmap?) -> Unit) {
+        val launcher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.TakePicturePreview(),
+            onResult = onPhotoTaken
+        )
+        SideEffect {
+            launcher.launch(null)
+        }
+    }
+
+    @Composable
+    private fun LaunchImagePicker(onImagePicked: (uri: Uri?) -> Unit) {
+        val launcher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.PickVisualMedia(),
+            onResult = onImagePicked
+        )
+        SideEffect {
+            launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+        }
+    }
+
+    @Composable
+    private fun DeleteRecord(recordId: Long) {
+        SideEffect {
+            lifecycle.coroutineScope.launch {
+                if (repository.deleteRecord(recordId)) {
+                    NotesWidgetsUpdater.oneOffUpdate(this@HostActivity)
+                    finish()
                 }
             }
         }
@@ -308,12 +290,12 @@ class HostActivity : AppCompatActivity() {
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                 ),
                 textStyle = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
                 placeholder = {
                     Text(
                         text = error.value ?: "Title",
                         color = Color.Gray,
                         style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 1,
                     )
                 },
                 value = title.value,
@@ -382,17 +364,8 @@ class HostActivity : AppCompatActivity() {
         lifecycle.coroutineScope.launch {
             val uri: Uri? = bitmap?.let { persistBitmap(it, correctRotation = true) }
             setContent {
-                ShowNoteEntryDialog { title, description, error ->
-                    lifecycle.coroutineScope.launch {
-                        val errorMessage = validate(title, description)
-                        errorMessage
-                            ?.let {
-                                error.value = it
-                            }
-                            ?: run {
-                                createNote(uri, title, description)
-                            }
-                    }
+                showRecordEntryDialog { title, description ->
+                    createNote(uri, title, description)
                 }
             }
         }
@@ -408,19 +381,28 @@ class HostActivity : AppCompatActivity() {
     }
 
     private fun onImagePicked(image: Uri?) {
-        setContent {
-            ShowNoteEntryDialog { title, description, error ->
-                lifecycle.coroutineScope.launch {
-                    val errorMessage = validate(title, description)
-                    errorMessage
-                        ?.let {
-                            error.value = it
-                        }
-                        ?: run {
-                            val cachedUri = image?.let { persistContent(image) }
-                            createNote(cachedUri, title, description)
-                        }
+        lifecycle.coroutineScope.launch {
+            val cachedUri = image?.let { persistContent(image) }
+            setContent {
+                showRecordEntryDialog { title, description ->
+                    createNote(cachedUri, title, description)
                 }
+            }
+        }
+    }
+
+    @Composable
+    private fun showRecordEntryDialog(onRecordReady: suspend (String, String) -> Unit) {
+        ShowNoteEntryDialog { title, description, error ->
+            lifecycle.coroutineScope.launch {
+                val errorMessage = validate(title, description)
+                errorMessage
+                    ?.let {
+                        error.value = it
+                    }
+                    ?: run {
+                        onRecordReady(title, description)
+                    }
             }
         }
     }

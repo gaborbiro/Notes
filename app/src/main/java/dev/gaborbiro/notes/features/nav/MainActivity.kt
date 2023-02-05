@@ -5,8 +5,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
-import androidx.navigation.ActivityNavigator
-import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -53,20 +51,20 @@ fun NotesNavHost(
                 navigator = NotesListNavigatorImpl(context),
             )
         }
-        intent(context, AddNoteViaCamera)
-        intent(context, AddNoteViaImage)
-        intent(context, AddNoteViaText)
+//        intent(context, AddNoteViaCamera)
+//        intent(context, AddNoteViaImage)
+//        intent(context, AddNoteViaText)
     }
 }
 
-private fun NavGraphBuilder.intent(
-    context: Context,
-    destination: NotesIntentDestination
-) {
-    addDestination(
-        ActivityNavigator(context)
-            .createDestination()
-            .setIntent(destination.intent(context))
-            .also { it.route = destination.route }
-    )
-}
+//private fun NavGraphBuilder.intent(
+//    context: Context,
+//    destination: NotesIntentDestination
+//) {
+//    addDestination(
+//        ActivityNavigator(context)
+//            .createDestination()
+//            .setIntent(destination.intent(context))
+//            .also { it.route = destination.route }
+//    )
+//}

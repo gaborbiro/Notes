@@ -27,8 +27,8 @@ class RecordsRepositoryImpl(
 
     override fun getRecordsLiveData(): LiveData<List<Record>> {
         return recordsDAO.getLiveData()
-            .let { Transformations.map(it, mapper::map) }
             .let { Transformations.distinctUntilChanged(it) }
+            .let { Transformations.map(it, mapper::map) }
     }
 
     override suspend fun saveRecord(
@@ -54,7 +54,7 @@ class RecordsRepositoryImpl(
         return recordsDAO.get(recordId)?.let(mapper::map)
     }
 
-    override suspend fun delete(recordId: Long): Boolean {
+    override suspend fun deleteRecord(recordId: Long): Boolean {
         val deleted = recordsDAO.delete(recordId) > 0
         val allRecords = recordsDAO.get()
         val allTemplates = templatesDAO.get()

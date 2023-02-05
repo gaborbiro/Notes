@@ -12,12 +12,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Transformations
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.features.common.RecordsUIMapper
 import dev.gaborbiro.notes.features.common.model.RecordUIModel
@@ -33,19 +32,18 @@ fun NotesListScreen(
     navigator: NotesListNavigator,
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val records = remember { mutableStateOf<List<RecordUIModel>>(emptyList()) }
+//    val records = remember { mutableStateOf<List<RecordUIModel>>(emptyList()) }
 
-//    val recordsLiveData = repository.getRecordsLiveData()
-//        .let { Transformations.map(it, mapper::map) }
-//        .let { Transformations.distinctUntilChanged(it) }
-//
-//    val recordsLive = recordsLiveData
-//        .observeAsState(initial = emptyList())
-//        .value
+    val recordsLiveData = repository.getRecordsLiveData()
+        .let { Transformations.map(it, uiMapper::map) }
 
-    NotesList(records.value, onUpdateImage = { record ->
-        navigator.updateRecordPhoto(record.templateId)
-    },
+    val recordsLive = recordsLiveData
+        .observeAsState(initial = emptyList())
+
+    NotesList(recordsLive.value,
+        onUpdateImage = { record ->
+            navigator.updateRecordPhoto(record.templateId)
+        },
         onDeleteImage = { record ->
             coroutineScope.launch {
                 repository.updateTemplatePhoto(record.templateId, uri = null)
@@ -54,16 +52,16 @@ fun NotesListScreen(
         },
         onDeleteRecord = { record ->
             coroutineScope.launch {
-                repository.delete(record.recordId)
+                repository.deleteRecord(record.recordId)
                 NotesWidgetsUpdater.oneOffUpdate(context)
             }
         })
 
-    LaunchedEffect(key1 = Unit) {
-        coroutineScope.launch {
-            records.value = repository.getRecords().let(uiMapper::map)
-        }
-    }
+//    LaunchedEffect(key1 = Unit) {
+//        coroutineScope.launch {
+//            records.value = repository.getRecords().let(uiMapper::map)
+//        }
+//    }
 }
 
 @Composable
