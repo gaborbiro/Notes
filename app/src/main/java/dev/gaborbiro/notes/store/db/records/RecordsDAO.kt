@@ -8,6 +8,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import dev.gaborbiro.notes.store.db.records.model.RecordAndTemplateDBModel
 import dev.gaborbiro.notes.store.db.records.model.RecordDBModel
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface RecordsDAO {
@@ -21,7 +22,7 @@ interface RecordsDAO {
 
     @Transaction
     @Query("SELECT * FROM records ORDER BY timestamp DESC")
-    fun getLiveData(): LiveData<List<RecordAndTemplateDBModel>>
+    fun getLiveData(): Flow<List<RecordAndTemplateDBModel>>
 
     @Transaction
     @Query("SELECT * FROM records WHERE _id=:id")

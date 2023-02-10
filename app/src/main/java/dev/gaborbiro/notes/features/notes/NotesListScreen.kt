@@ -12,11 +12,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Transformations
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.features.common.RecordsUIMapper
 import dev.gaborbiro.notes.features.common.model.RecordUIModel
@@ -32,15 +31,10 @@ fun NotesListScreen(
     navigator: NotesListNavigator,
 ) {
     val coroutineScope = rememberCoroutineScope()
-//    val records = remember { mutableStateOf<List<RecordUIModel>>(emptyList()) }
+    val records = repository.getRecordsFlow()
+        .collectAsStateWithLifecycle(initialValue = emptyList())
 
-    val recordsLiveData = repository.getRecordsLiveData()
-        .let { Transformations.map(it, uiMapper::map) }
-
-    val recordsLive = recordsLiveData
-        .observeAsState(initial = emptyList())
-
-    NotesList(recordsLive.value,
+    NotesList(records.value.map { uiMapper.map(it) },
         onUpdateImage = { record ->
             navigator.updateRecordPhoto(record.templateId)
         },
@@ -56,12 +50,6 @@ fun NotesListScreen(
                 NotesWidgetsUpdater.oneOffUpdate(context)
             }
         })
-
-//    LaunchedEffect(key1 = Unit) {
-//        coroutineScope.launch {
-//            records.value = repository.getRecords().let(uiMapper::map)
-//        }
-//    }
 }
 
 @Composable

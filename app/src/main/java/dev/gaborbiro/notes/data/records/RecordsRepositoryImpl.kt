@@ -1,8 +1,6 @@
 package dev.gaborbiro.notes.data.records
 
 import android.net.Uri
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.Transformations
 import androidx.room.Transaction
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.data.records.domain.model.Record
@@ -13,6 +11,9 @@ import dev.gaborbiro.notes.store.db.records.RecordsDAO
 import dev.gaborbiro.notes.store.db.records.TemplatesDAO
 import dev.gaborbiro.notes.store.db.records.model.TemplateDBModel
 import dev.gaborbiro.notes.store.file.DocumentDeleter
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 
 class RecordsRepositoryImpl(
     private val templatesDAO: TemplatesDAO,
@@ -25,10 +26,10 @@ class RecordsRepositoryImpl(
         return mapper.map(recordsDAO.get())
     }
 
-    override fun getRecordsLiveData(): LiveData<List<Record>> {
+    override fun getRecordsFlow(): Flow<List<Record>> {
         return recordsDAO.getLiveData()
-            .let { Transformations.distinctUntilChanged(it) }
-            .let { Transformations.map(it, mapper::map) }
+            .distinctUntilChanged()
+            .map(mapper::map)
     }
 
     override suspend fun saveRecord(

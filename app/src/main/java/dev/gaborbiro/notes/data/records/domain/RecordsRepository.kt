@@ -1,7 +1,6 @@
 package dev.gaborbiro.notes.data.records.domain
 
 import android.net.Uri
-import androidx.lifecycle.LiveData
 import dev.gaborbiro.notes.App
 import dev.gaborbiro.notes.data.records.DBMapper
 import dev.gaborbiro.notes.data.records.RecordsRepositoryImpl
@@ -11,6 +10,7 @@ import dev.gaborbiro.notes.data.records.domain.model.ToSaveRecord
 import dev.gaborbiro.notes.data.records.domain.model.ToSaveTemplate
 import dev.gaborbiro.notes.store.db.AppDatabase
 import dev.gaborbiro.notes.store.file.DocumentDeleter
+import kotlinx.coroutines.flow.Flow
 
 interface RecordsRepository {
 
@@ -33,7 +33,7 @@ interface RecordsRepository {
 
     suspend fun getRecords(): List<Record>
 
-    fun getRecordsLiveData(): LiveData<List<Record>>
+    fun getRecordsFlow(): Flow<List<Record>>
 
     suspend fun saveTemplate(template: ToSaveTemplate): Long
 

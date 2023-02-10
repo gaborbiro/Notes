@@ -17,7 +17,7 @@ class RecordsUIMapper(
         return records.map(::map)
     }
 
-    private fun map(record: Record): RecordUIModel {
+    fun map(record: Record): RecordUIModel {
         val bitmap: Bitmap? = record.template.image?.let { bitmapLoader.loadBitmap(it) }
         val timestamp = record.timestamp
         val timestampStr = when {
