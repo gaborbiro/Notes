@@ -5,7 +5,7 @@ import androidx.room.Entity
 import androidx.room.Index
 import dev.gaborbiro.notes.store.db.common.DBModel
 
-@Entity(tableName = "templates", indices = [Index(value = ["name"], unique = true)])
+@Entity(tableName = "templates")
 class TemplateDBModel(
     val image: Uri?,
     val name: String,

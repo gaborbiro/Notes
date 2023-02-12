@@ -153,13 +153,6 @@ class HostViewModel(
             if (title.isBlank()) {
                 validationError = "Cannot be empty"
             }
-            if (validationError == null) {
-                val templatesWithSameTitle = repository.getTemplatesByName(title)
-                if (templatesWithSameTitle.isNotEmpty()) {
-                    toast = "Already exists"
-                    validationError = "Cannot be empty"
-                }
-            }
             if (validationError != null) {
                 _uiState.update {
                     it.copy(

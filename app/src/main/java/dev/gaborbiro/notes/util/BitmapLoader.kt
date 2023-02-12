@@ -5,7 +5,6 @@ import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.graphics.Matrix
 import android.net.Uri
-import android.view.Display
 import android.view.Surface
 import java.io.FileNotFoundException
 
@@ -25,13 +24,13 @@ class BitmapLoader(
 }
 
 fun correctBitmap(
-    display: Display,
+    currentScreenRotation: Int,
     bitmap: Bitmap,
     correctRotation: Boolean,
     correctWidth: Boolean
 ): Bitmap {
     val rotateAngle = if (correctRotation) {
-        when (display.rotation) {
+        when (currentScreenRotation) {
             Surface.ROTATION_0 -> 90f
             Surface.ROTATION_90 -> 0f
             Surface.ROTATION_180 -> 0f
@@ -44,7 +43,7 @@ fun correctBitmap(
     return modifyImage(
         bitmap,
         rotateAngle,
-        if (correctWidth) 180 else 0
+        if (correctWidth) 360 else 0
     )
 }
 

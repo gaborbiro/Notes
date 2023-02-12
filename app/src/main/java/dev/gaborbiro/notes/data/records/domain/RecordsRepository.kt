@@ -46,6 +46,4 @@ interface RecordsRepository {
     suspend fun deleteRecord(recordId: Long): Boolean
 
     suspend fun updateTemplatePhoto(templateId: Long, uri: Uri?)
-
-    suspend fun getTemplatesByName(name: String): List<Template>
 }

@@ -84,8 +84,4 @@ class RecordsRepositoryImpl(
             }
         }
     }
-
-    override suspend fun getTemplatesByName(name: String): List<Template> {
-        return templatesDAO.get(name).map(mapper::map)
-    }
 }
