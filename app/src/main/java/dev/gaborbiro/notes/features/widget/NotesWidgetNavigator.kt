@@ -87,12 +87,12 @@ class DuplicateNoteAction : ActionCallback {
         val recordId = parameters[ActionParameters.Key<Long>(PREFS_KEY_RECORD)]!!
         val newRecordId = RecordsRepository.get().duplicateRecord(recordId, "")
         NotesWidgetsUpdater.oneOffUpdate(context)
-        context.showActionNotification(
-            title = "Undo - duplicate record",
-            action = "Undo",
-            actionIcon = R.drawable.ic_undo,
-            actionIntent = HostActivity.getDeleteRecordIntent(context, newRecordId)
-        )
+//        context.showActionNotification(
+//            title = "Undo - duplicate record",
+//            action = "Undo",
+//            actionIcon = R.drawable.ic_undo,
+//            actionIntent = HostActivity.getDeleteRecordIntent(context, newRecordId)
+//        )
     }
 }
 

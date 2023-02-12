@@ -31,13 +31,13 @@ class HostActivity : AppCompatActivity() {
 
     companion object {
 
-        fun getDeleteRecordIntent(context: Context, recordId: Long): Intent {
-            return Intent(context, HostActivity::class.java).also {
-                it.putExtra(EXTRA_ACTION, ACTION_DELETE)
-                it.putExtra(EXTRA_RECORD_ID, recordId)
-                it.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            }
-        }
+//        fun getDeleteRecordIntent(context: Context, recordId: Long): Intent {
+//            return Intent(context, HostActivity::class.java).also {
+//                it.putExtra(EXTRA_ACTION, ACTION_DELETE)
+//                it.putExtra(EXTRA_RECORD_ID, recordId)
+//                it.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+//            }
+//        }
 
         fun launchAddNoteWithCamera(context: Context) =
             launchActivity(context, getCameraIntent(context))
