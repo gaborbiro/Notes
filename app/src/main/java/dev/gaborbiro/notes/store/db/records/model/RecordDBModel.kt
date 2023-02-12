@@ -18,7 +18,6 @@ import java.time.LocalDateTime
 data class RecordDBModel(
     val timestamp: LocalDateTime,
     val templateId: Long,
-    val notes: String,
 ) : DBModel()
 
 const val COLUMN_TEMPLATE = "templateId"

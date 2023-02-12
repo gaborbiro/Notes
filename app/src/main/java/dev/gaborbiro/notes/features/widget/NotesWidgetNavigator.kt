@@ -7,10 +7,8 @@ import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
-import dev.gaborbiro.notes.R
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.features.host.HostActivity
-import dev.gaborbiro.notes.util.showActionNotification
 
 interface NotesWidgetNavigator {
 
@@ -85,7 +83,7 @@ class DuplicateNoteAction : ActionCallback {
         parameters: ActionParameters
     ) {
         val recordId = parameters[ActionParameters.Key<Long>(PREFS_KEY_RECORD)]!!
-        val newRecordId = RecordsRepository.get().duplicateRecord(recordId, "")
+        val newRecordId = RecordsRepository.get().duplicateRecord(recordId)
         NotesWidgetsUpdater.oneOffUpdate(context)
 //        context.showActionNotification(
 //            title = "Undo - duplicate record",

@@ -24,5 +24,5 @@ interface DBMapper {
 
     fun map(template: ToSaveTemplate): TemplateDBModel
 
-    fun map(record: Record, notes: String): RecordDBModel
+    fun map(record: Record): RecordDBModel
 }

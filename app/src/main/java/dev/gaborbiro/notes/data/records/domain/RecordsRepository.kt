@@ -5,7 +5,6 @@ import dev.gaborbiro.notes.App
 import dev.gaborbiro.notes.data.records.DBMapper
 import dev.gaborbiro.notes.data.records.RecordsRepositoryImpl
 import dev.gaborbiro.notes.data.records.domain.model.Record
-import dev.gaborbiro.notes.data.records.domain.model.Template
 import dev.gaborbiro.notes.data.records.domain.model.ToSaveRecord
 import dev.gaborbiro.notes.data.records.domain.model.ToSaveTemplate
 import dev.gaborbiro.notes.store.db.AppDatabase
@@ -39,7 +38,7 @@ interface RecordsRepository {
 
     suspend fun saveRecord(record: ToSaveRecord): Long
 
-    suspend fun duplicateRecord(recordId: Long, notes: String): Long
+    suspend fun duplicateRecord(recordId: Long): Long
 
     suspend fun getRecord(recordId: Long): Record?
 

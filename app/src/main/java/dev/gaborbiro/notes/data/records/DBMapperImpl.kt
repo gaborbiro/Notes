@@ -29,7 +29,6 @@ class DBMapperImpl : DBMapper {
             id = record.record.id!!,
             timestamp = record.record.timestamp,
             template = map(record.template),
-            notes = record.record.notes,
         )
     }
 
@@ -37,7 +36,6 @@ class DBMapperImpl : DBMapper {
         return RecordDBModel(
             timestamp = record.timestamp,
             templateId = record.templateId,
-            notes = record.notes,
         )
     }
 
@@ -49,12 +47,11 @@ class DBMapperImpl : DBMapper {
         )
     }
 
-    override fun map(record: Record, notes: String): RecordDBModel {
+    override fun map(record: Record): RecordDBModel {
         return map(
             ToSaveRecord(
                 timestamp = LocalDateTime.now(),
                 templateId = record.template.id,
-                notes = notes
             )
         )
     }

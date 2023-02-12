@@ -4,7 +4,6 @@ import android.net.Uri
 import androidx.room.Transaction
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.data.records.domain.model.Record
-import dev.gaborbiro.notes.data.records.domain.model.Template
 import dev.gaborbiro.notes.data.records.domain.model.ToSaveRecord
 import dev.gaborbiro.notes.data.records.domain.model.ToSaveTemplate
 import dev.gaborbiro.notes.store.db.records.RecordsDAO
@@ -44,9 +43,9 @@ class RecordsRepositoryImpl(
         return templatesDAO.insertOrUpdate(mapper.map(template))
     }
 
-    override suspend fun duplicateRecord(recordId: Long, notes: String): Long {
+    override suspend fun duplicateRecord(recordId: Long): Long {
         return getRecord(recordId)!!.let { record: Record ->
-            recordsDAO.insert(mapper.map(record, notes))
+            recordsDAO.insert(mapper.map(record))
         }
     }
 

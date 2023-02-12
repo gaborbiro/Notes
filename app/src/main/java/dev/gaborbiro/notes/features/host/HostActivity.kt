@@ -68,9 +68,9 @@ class HostActivity : AppCompatActivity() {
             intent: Intent,
             vararg extras: Pair<String, out Any>
         ) {
-            appContext.startActivity(intent.also { intent ->
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                intent.putExtras(bundleOf(*extras))
+            appContext.startActivity(intent.apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                putExtras(bundleOf(*extras))
             })
         }
 

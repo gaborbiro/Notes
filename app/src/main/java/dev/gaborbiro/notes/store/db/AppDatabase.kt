@@ -3,9 +3,11 @@ package dev.gaborbiro.notes.store.db
 import android.content.Context
 import androidx.room.AutoMigration
 import androidx.room.Database
+import androidx.room.DeleteColumn
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.AutoMigrationSpec
 import dev.gaborbiro.notes.store.db.records.RecordsDAO
 import dev.gaborbiro.notes.store.db.records.TemplatesDAO
 import dev.gaborbiro.notes.store.db.records.model.RecordDBModel
@@ -13,9 +15,12 @@ import dev.gaborbiro.notes.store.db.records.model.TemplateDBModel
 
 @Database(
     entities = [RecordDBModel::class, TemplateDBModel::class],
-    version = 2,
+    version = 3,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 1, to = 2)]
+    autoMigrations = [
+        AutoMigration(from = 1, to = 2),
+        AutoMigration(from = 2, to = 3, spec = AppDatabase.DeleteNoteMigration_2_3::class)
+    ]
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -42,4 +47,10 @@ abstract class AppDatabase : RoomDatabase() {
             ).build()
         }
     }
+
+    @DeleteColumn(
+        tableName = "records",
+        columnName = "notes"
+    )
+    class DeleteNoteMigration_2_3 : AutoMigrationSpec
 }

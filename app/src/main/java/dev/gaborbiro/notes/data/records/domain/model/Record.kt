@@ -6,5 +6,4 @@ data class Record(
     val id: Long,
     val timestamp: LocalDateTime,
     val template: Template,
-    val notes: String,
 )

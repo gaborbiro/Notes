@@ -182,7 +182,6 @@ class HostViewModel(
         val record = ToSaveRecord(
             timestamp = LocalDateTime.now(),
             templateId = templateId,
-            notes = "",
         )
         repository.saveRecord(record)
     }
