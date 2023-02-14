@@ -4,6 +4,7 @@ package dev.gaborbiro.notes.features.notes
 
 import RecordView
 import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -40,13 +41,17 @@ fun NotesListScreen(
         },
         onDeleteImage = { record ->
             coroutineScope.launch {
-                repository.updateTemplatePhoto(record.templateId, uri = null)
+                repository.deleteImage(record.templateId)
                 NotesWidgetsUpdater.oneOffUpdate(context)
             }
         },
+        onEditRecord = { record ->
+            navigator.editRecord(recordId = record.recordId)
+        },
         onDeleteRecord = { record ->
             coroutineScope.launch {
-                repository.deleteRecord(record.recordId)
+                val (templateDeleted, imageDeleted) = repository.deleteRecordAndCleanupTemplate(record.recordId)
+                Log.d("Notes", "template deleted: $templateDeleted, image deleted: $imageDeleted")
                 NotesWidgetsUpdater.oneOffUpdate(context)
             }
         })
@@ -57,6 +62,7 @@ private fun NotesList(
     records: List<RecordUIModel>,
     onUpdateImage: (RecordUIModel) -> Unit,
     onDeleteImage: (RecordUIModel) -> Unit,
+    onEditRecord: (RecordUIModel) -> Unit,
     onDeleteRecord: (RecordUIModel) -> Unit,
 ) {
     val listState = rememberLazyListState()
@@ -75,6 +81,7 @@ private fun NotesList(
                 record = record,
                 onUpdateImage = { onUpdateImage(record) },
                 onDeleteImage = { onDeleteImage(record) },
+                onEditRecord = { onEditRecord(record) },
                 onDeleteRecord = { onDeleteRecord(record) }
             )
         }

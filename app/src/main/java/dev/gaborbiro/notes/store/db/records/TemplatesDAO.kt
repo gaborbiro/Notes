@@ -1,7 +1,7 @@
 package dev.gaborbiro.notes.store.db.records
 
+import android.net.Uri
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Query
 import androidx.room.Upsert
 import dev.gaborbiro.notes.store.db.records.model.TemplateDBModel
@@ -18,6 +18,9 @@ interface TemplatesDAO {
     @Query("SELECT * FROM templates")
     suspend fun get(): List<TemplateDBModel>
 
-    @Delete
-    suspend fun delete(template: TemplateDBModel)
+    @Query("SELECT * FROM templates WHERE image=:image")
+    suspend fun getByImage(image: Uri?): List<TemplateDBModel>
+
+    @Query("DELETE FROM templates WHERE _id = :id")
+    suspend fun delete(id: Long): Int
 }

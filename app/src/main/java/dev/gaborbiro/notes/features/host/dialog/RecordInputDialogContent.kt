@@ -1,4 +1,4 @@
-package dev.gaborbiro.notes.features.host
+package dev.gaborbiro.notes.features.host.dialog
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -45,16 +45,24 @@ fun NoteInputDialogContent(
     onCancel: () -> Unit,
     onSubmit: (String, String) -> Unit,
     onChange: (String, String) -> Unit,
+    title: String? = null,
+    description: String? = null,
     error: String?,
 ) {
-    var title by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
+    val focusRequester = remember { FocusRequester() }
 
-    val onDone: () -> Unit = {
-        onSubmit(title.trim(), description.trim())
+    var titleState by remember {
+        mutableStateOf(title ?: "")
+    }
+    var descriptionState by remember {
+        mutableStateOf(description ?: "")
     }
 
-    Column(modifier = Modifier.padding(20.dp)) {
+    val onDone: () -> Unit = {
+        onSubmit(titleState.trim(), descriptionState.trim())
+    }
+
+    Column(modifier = Modifier.padding(PaddingDefault)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -77,12 +85,8 @@ fun NoteInputDialogContent(
             )
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
-        val focusRequester = remember { FocusRequester() }
-        LaunchedEffect(key1 = Unit) {
-            delay(100)
-            focusRequester.requestFocus()
-        }
+        Spacer(modifier = Modifier.height(PaddingDefault))
+
         TextField(
             modifier = Modifier
                 .fillMaxWidth()
@@ -100,15 +104,15 @@ fun NoteInputDialogContent(
                     style = MaterialTheme.typography.bodyMedium,
                 )
             },
-            value = title,
+            value = titleState,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Text,
                 capitalization = KeyboardCapitalization.Sentences,
                 imeAction = ImeAction.Next
             ),
             onValueChange = {
-                title = it
-                onChange(title, description)
+                titleState = it
+                onChange(titleState, descriptionState)
             },
         )
 
@@ -129,18 +133,14 @@ fun NoteInputDialogContent(
                     style = MaterialTheme.typography.bodyMedium,
                 )
             },
-            value = description,
+            value = descriptionState,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Text,
                 capitalization = KeyboardCapitalization.Sentences,
-//                    imeAction = ImeAction.Done
             ),
-//                keyboardActions = KeyboardActions(onDone = {
-//                    onDone()
-//                }),
             onValueChange = {
-                description = it
-                onChange(title, description)
+                descriptionState = it
+                onChange(titleState, descriptionState)
             },
         )
 
@@ -159,6 +159,11 @@ fun NoteInputDialogContent(
                 .padding(horizontal = 40.dp)
         ) {
             Text(text = "Save")
+        }
+
+        LaunchedEffect(key1 = Unit) {
+            delay(100)
+            focusRequester.requestFocus()
         }
     }
 }

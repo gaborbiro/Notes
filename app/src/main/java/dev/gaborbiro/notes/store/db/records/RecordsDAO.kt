@@ -21,6 +21,10 @@ interface RecordsDAO {
     suspend fun get(): List<RecordAndTemplateDBModel>
 
     @Transaction
+    @Query("SELECT * FROM records WHERE templateId=:templateId ORDER BY timestamp DESC")
+    suspend fun getByTemplate(templateId: Long): List<RecordAndTemplateDBModel>
+
+    @Transaction
     @Query("SELECT * FROM records ORDER BY timestamp DESC")
     fun getLiveData(): Flow<List<RecordAndTemplateDBModel>>
 

@@ -15,11 +15,13 @@ import dev.gaborbiro.notes.store.db.records.model.TemplateDBModel
 
 @Database(
     entities = [RecordDBModel::class, TemplateDBModel::class],
-    version = 3,
+    version = 5,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
-        AutoMigration(from = 2, to = 3, spec = AppDatabase.DeleteNoteMigration_2_3::class)
+        AutoMigration(from = 2, to = 3, spec = AppDatabase.DeleteNoteMigration_2_3::class),
+        AutoMigration(from = 3, to = 4),
+        AutoMigration(from = 4, to = 5),
     ]
 )
 @TypeConverters(Converters::class)

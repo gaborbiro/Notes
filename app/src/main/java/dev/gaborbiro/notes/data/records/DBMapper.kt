@@ -7,6 +7,7 @@ import dev.gaborbiro.notes.data.records.domain.model.ToSaveTemplate
 import dev.gaborbiro.notes.store.db.records.model.RecordAndTemplateDBModel
 import dev.gaborbiro.notes.store.db.records.model.RecordDBModel
 import dev.gaborbiro.notes.store.db.records.model.TemplateDBModel
+import java.time.LocalDateTime
 
 interface DBMapper {
 
@@ -20,9 +21,9 @@ interface DBMapper {
 
     fun map(record: RecordAndTemplateDBModel): Record
 
-    fun map(record: ToSaveRecord): RecordDBModel
+    fun map(record: ToSaveRecord, templateId: Long): RecordDBModel
 
     fun map(template: ToSaveTemplate): TemplateDBModel
 
-    fun map(record: Record): RecordDBModel
+    fun map(record: Record, dateTime: LocalDateTime? = null): RecordDBModel
 }

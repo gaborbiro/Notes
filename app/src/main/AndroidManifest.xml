@@ -33,6 +33,7 @@
             android:name=".features.host.HostActivity"
             android:excludeFromRecents="true"
             android:exported="true"
+            android:configChanges="orientation|screenSize"
             android:launchMode="singleInstance"
             android:theme="@style/Theme.Transparent" />
 

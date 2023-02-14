@@ -32,10 +32,10 @@ class DBMapperImpl : DBMapper {
         )
     }
 
-    override fun map(record: ToSaveRecord): RecordDBModel {
+    override fun map(record: ToSaveRecord, templateId: Long): RecordDBModel {
         return RecordDBModel(
             timestamp = record.timestamp,
-            templateId = record.templateId,
+            templateId = templateId,
         )
     }
 
@@ -47,12 +47,10 @@ class DBMapperImpl : DBMapper {
         )
     }
 
-    override fun map(record: Record): RecordDBModel {
-        return map(
-            ToSaveRecord(
-                timestamp = LocalDateTime.now(),
-                templateId = record.template.id,
-            )
+    override fun map(record: Record, dateTime: LocalDateTime?/* = null */): RecordDBModel {
+        return RecordDBModel(
+            timestamp = dateTime ?: record.timestamp,
+            templateId = record.template.id
         )
     }
 }

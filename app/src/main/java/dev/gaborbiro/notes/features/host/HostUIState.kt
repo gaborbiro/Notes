@@ -6,17 +6,46 @@ data class HostUIState(
     val showCamera: Boolean = false,
     val showImagePicker: Boolean = false,
     val refreshWidgetAndCloseScreen: Boolean = false,
-    val imageUri: Uri? = null,
-    val templateIdForRedo: Long? = null,
-    val inputDialogState: InputDialogState = InputDialogState(),
+    val templateIdForImageRedo: Long? = null,
+    val dialog: DialogState? = null,
 )
 
-data class InputDialogState(
-    val visible: Boolean = false,
-    val validationError: String? = null,
-)
+sealed class DialogState {
+    data class EditTargetConfirmationDialog(
+        val recordId: Long,
+        val count: Int,
+        val newTitle: String,
+        val newDescription: String,
+    ) : DialogState()
 
-sealed class Intent {
-    object OpenCamera : Intent()
-    object CameraOpened : Intent()
+    sealed class InputDialogState(
+        open val validationError: String? = null,
+    ) : DialogState() {
+        data class Create(
+            override val validationError: String? = null,
+        ) : InputDialogState(validationError) {
+            override fun withValidationError(validationError: String?) =
+                copy(validationError = validationError)
+        }
+
+        data class CreateWithImage(
+            val image: Uri?,
+            override val validationError: String? = null,
+        ) : InputDialogState(validationError) {
+            override fun withValidationError(validationError: String?) =
+                copy(validationError = validationError)
+        }
+
+        data class Edit(
+            val recordId: Long,
+            val title: String,
+            val description: String,
+            override val validationError: String? = null,
+        ) : InputDialogState(validationError) {
+            override fun withValidationError(validationError: String?) =
+                copy(validationError = validationError)
+        }
+
+        abstract fun withValidationError(validationError: String?): InputDialogState
+    }
 }

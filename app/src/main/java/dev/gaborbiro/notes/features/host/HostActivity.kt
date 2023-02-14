@@ -20,7 +20,12 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.os.bundleOf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
+import dev.gaborbiro.notes.features.host.dialog.EditTarget
+import dev.gaborbiro.notes.features.host.dialog.EditTargetConfirmationDialogContent
+import dev.gaborbiro.notes.features.host.dialog.NoteInputDialogContent
 import dev.gaborbiro.notes.features.widget.NotesWidgetsUpdater
+import dev.gaborbiro.notes.store.db.AppDatabase
+import dev.gaborbiro.notes.store.db.TransactionProviderImpl
 import dev.gaborbiro.notes.store.file.DocumentWriter
 import dev.gaborbiro.notes.ui.theme.NotesTheme
 import dev.gaborbiro.notes.util.BitmapLoader
@@ -42,24 +47,31 @@ class HostActivity : AppCompatActivity() {
         fun launchAddNoteWithCamera(context: Context) =
             launchActivity(context, getCameraIntent(context))
 
-        private fun getCameraIntent(context: Context) = getActionIntent(context, ACTION_CAMERA)
+        private fun getCameraIntent(context: Context) = getActionIntent(context, Action.CAMERA)
 
         fun launchAddNoteWithImage(context: Context) =
             launchActivity(context, getImagePickerIntent(context))
 
         private fun getImagePickerIntent(context: Context) =
-            getActionIntent(context, ACTION_PICK_IMAGE)
+            getActionIntent(context, Action.PICK_IMAGE)
 
         fun launchAddNote(context: Context) = launchActivity(context, getTextOnlyIntent(context))
 
-        private fun getTextOnlyIntent(context: Context) = getActionIntent(context, ACTION_TEXT_ONLY)
-
+        private fun getTextOnlyIntent(context: Context) = getActionIntent(context, Action.TEXT_ONLY)
 
         fun launchRedoImage(context: Context, templateId: Long) {
             launchActivity(
                 appContext = context,
-                intent = getActionIntent(context, ACTION_REDO_IMAGE),
+                intent = getActionIntent(context, Action.REDO_IMAGE),
                 EXTRA_TEMPLATE_ID to templateId
+            )
+        }
+
+        fun launchEdit(context: Context, recordId: Long) {
+            launchActivity(
+                appContext = context,
+                intent = getActionIntent(context, Action.EDIT),
+                EXTRA_RECORD_ID to recordId
             )
         }
 
@@ -74,22 +86,19 @@ class HostActivity : AppCompatActivity() {
             })
         }
 
-        private fun getActionIntent(context: Context, action: String) =
+        private fun getActionIntent(context: Context, action: Action) =
             Intent(context, HostActivity::class.java).also {
-                it.putExtra(EXTRA_ACTION, action)
+                it.putExtra(EXTRA_ACTION, action.name)
             }
 
         private const val EXTRA_ACTION = "extra_action"
 
-        private const val ACTION_CAMERA = "camera"
-        private const val ACTION_PICK_IMAGE = "pick_image"
-        private const val ACTION_TEXT_ONLY = "text_only"
+        private enum class Action {
+            CAMERA, PICK_IMAGE, TEXT_ONLY, DELETE, REDO_IMAGE, EDIT
+        }
 
-        private const val ACTION_DELETE = "delete"
-        private const val EXTRA_RECORD_ID = "recordId"
-
-        private const val ACTION_REDO_IMAGE = "redo_image"
         private const val EXTRA_TEMPLATE_ID = "template_id"
+        private const val EXTRA_RECORD_ID = "record_id"
     }
 
     private val viewModel by lazy {
@@ -97,6 +106,7 @@ class HostActivity : AppCompatActivity() {
             RecordsRepository.get(),
             DocumentWriter(this),
             BitmapLoader(this),
+            TransactionProviderImpl(AppDatabase.getInstance())
         )
     }
 
@@ -108,35 +118,31 @@ class HostActivity : AppCompatActivity() {
         }
         setContent {
             NotesTheme {
-                val action = intent.getStringExtra(EXTRA_ACTION)
+                val action = intent.getStringExtra(EXTRA_ACTION)?.let { Action.valueOf(it) }
                 intent.removeExtra(EXTRA_ACTION) // consume intent
                 when (action) {
-                    ACTION_CAMERA -> viewModel.initWithCamera()
-                    ACTION_PICK_IMAGE -> viewModel.initWithImagePicker()
-                    ACTION_TEXT_ONLY -> viewModel.initWithJustText()
+                    Action.CAMERA -> viewModel.initWithCamera()
+                    Action.PICK_IMAGE -> viewModel.initWithImagePicker()
+                    Action.TEXT_ONLY -> viewModel.initWithJustText()
 
-                    ACTION_REDO_IMAGE -> {
+                    Action.REDO_IMAGE -> {
                         val templateId = intent.getLongExtra(EXTRA_TEMPLATE_ID, -1L)
                         viewModel.redoImage(templateId)
                     }
 
-                    ACTION_DELETE -> {
+                    Action.DELETE -> {
                         val recordId = intent.getLongExtra(EXTRA_RECORD_ID, -1L)
                         viewModel.deleteRecord(recordId)
                         hideActionNotification()
                     }
 
-                    null -> {
-                        // ignore
+                    Action.EDIT -> {
+                        val recordId = intent.getLongExtra(EXTRA_RECORD_ID, -1L)
+                        viewModel.startWithEdit(recordId)
                     }
 
-                    else -> {
-                        Toast.makeText(
-                            this,
-                            "Unexpected action in HostActivity: $action",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        finish()
+                    null -> {
+                        // ignore
                     }
                 }
             }
@@ -170,7 +176,7 @@ class HostActivity : AppCompatActivity() {
                 finish()
             }
 
-            InputDialog(viewModel.uiState.collectAsStateWithLifecycle().value.inputDialogState)
+            Dialog(viewModel.uiState.collectAsStateWithLifecycle().value.dialog)
 
             viewModel.toast?.let {
                 viewModel.toast = null
@@ -180,20 +186,57 @@ class HostActivity : AppCompatActivity() {
     }
 
     @Composable
-    fun InputDialog(dialogState: InputDialogState) {
-        if (dialogState.visible) {
-            Dialog(onDismissRequest = { viewModel.onDialogDismissed() }) {
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                ) {
-                    NoteInputDialogContent(
-                        onCancel = { viewModel.onDialogDismissed() },
-                        onSubmit = viewModel::onRecordDetailsSubmitted,
-                        onChange = viewModel::onRecordDetailsChanged,
-                        error = dialogState.validationError,
-                    )
-                }
+    fun Dialog(dialogState: DialogState?) {
+        when (dialogState) {
+            is DialogState.InputDialogState -> InputDialog(dialogState)
+            is DialogState.EditTargetConfirmationDialog -> EditTargetConfirmationDialog(dialogState)
+            null -> {
+                // no dialog is shown
+            }
+        }
+    }
+
+    @Composable
+    private fun InputDialog(dialogState: DialogState.InputDialogState) {
+        Dialog(onDismissRequest = { viewModel.onDialogDismissed() }) {
+            val title = (dialogState as? DialogState.InputDialogState.Edit)?.title
+            val description = (dialogState as? DialogState.InputDialogState.Edit)?.description
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.primaryContainer,
+                shadowElevation = 4.dp,
+            ) {
+                NoteInputDialogContent(
+                    onCancel = { viewModel.onDialogDismissed() },
+                    onSubmit = viewModel::onRecordDetailsSubmitted,
+                    onChange = viewModel::onRecordDetailsChanged,
+                    title = title,
+                    description = description,
+                    error = dialogState.validationError,
+                )
+            }
+        }
+    }
+
+    @Composable
+    private fun EditTargetConfirmationDialog(dialogState: DialogState.EditTargetConfirmationDialog) {
+        Dialog(onDismissRequest = { viewModel.onDialogDismissed() }) {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.primaryContainer,
+                shadowElevation = 4.dp,
+            ) {
+                EditTargetConfirmationDialogContent(
+                    count = dialogState.count,
+                    onSubmit = { target ->
+                        val vmTarget = when (target) {
+                            EditTarget.RECORD -> HostViewModel.Companion.EditTarget.RECORD
+                            EditTarget.TEMPLATE -> HostViewModel.Companion.EditTarget.TEMPLATE
+                        }
+                        viewModel.onEditTargetConfirmed(vmTarget)
+                    },
+                    onCancel = { viewModel.onDialogDismissed() },
+                )
             }
         }
     }

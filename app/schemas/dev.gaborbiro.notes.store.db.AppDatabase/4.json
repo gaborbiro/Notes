@@ -1,8 +1,8 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 3,
-    "identityHash": "600b6f87b9eb3ef299541be1456f4112",
+    "version": 4,
+    "identityHash": "f0f091f243c9dc07b9f5352c6ce3172e",
     "entities": [
       {
         "tableName": "records",
@@ -85,13 +85,14 @@
         },
         "indices": [
           {
-            "name": "index_templates_name",
+            "name": "index_templates_image_name",
             "unique": true,
             "columnNames": [
+              "image",
               "name"
             ],
             "orders": [],
-            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_templates_name` ON `${TABLE_NAME}` (`name`)"
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_templates_image_name` ON `${TABLE_NAME}` (`image`, `name`)"
           }
         ],
         "foreignKeys": []
@@ -100,7 +101,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '600b6f87b9eb3ef299541be1456f4112')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f0f091f243c9dc07b9f5352c6ce3172e')"
     ]
   }
 }

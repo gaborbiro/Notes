@@ -6,7 +6,6 @@ import dev.gaborbiro.notes.data.records.DBMapper
 import dev.gaborbiro.notes.data.records.RecordsRepositoryImpl
 import dev.gaborbiro.notes.data.records.domain.model.Record
 import dev.gaborbiro.notes.data.records.domain.model.ToSaveRecord
-import dev.gaborbiro.notes.data.records.domain.model.ToSaveTemplate
 import dev.gaborbiro.notes.store.db.AppDatabase
 import dev.gaborbiro.notes.store.file.DocumentDeleter
 import kotlinx.coroutines.flow.Flow
@@ -23,7 +22,9 @@ interface RecordsRepository {
                     templatesDAO = AppDatabase.getInstance().templatesDAO(),
                     recordsDAO = AppDatabase.getInstance().recordsDAO(),
                     mapper = DBMapper.get(),
-                    documentDeleter = DocumentDeleter(App.appContext)
+                    documentDeleter = DocumentDeleter(App.appContext),
+//                    documentWriter = DocumentWriter(App.appContext),
+//                    bitmapLoader = BitmapLoader(App.appContext),
                 )
             }
             return INSTANCE
@@ -32,17 +33,31 @@ interface RecordsRepository {
 
     suspend fun getRecords(): List<Record>
 
+    suspend fun getRecords(templateId: Long): List<Record>
+
     fun getRecordsFlow(): Flow<List<Record>>
 
-    suspend fun saveTemplate(template: ToSaveTemplate): Long
+    suspend fun getRecord(recordId: Long): Record?
 
     suspend fun saveRecord(record: ToSaveRecord): Long
 
     suspend fun duplicateRecord(recordId: Long): Long
 
-    suspend fun getRecord(recordId: Long): Record?
 
-    suspend fun deleteRecord(recordId: Long): Boolean
+    /**
+     * @return whether the template and image have also been deleted
+     */
+    suspend fun deleteRecordAndCleanupTemplate(recordId: Long): Pair<Boolean, Boolean>
 
-    suspend fun updateTemplatePhoto(templateId: Long, uri: Uri?)
+    /**
+     * null means value is not changed
+     */
+    suspend fun updateTemplate(
+        templateId: Long,
+        image: Uri? = null,
+        title: String? = null,
+        description: String? = null
+    )
+
+    suspend fun deleteImage(templateId: Long)
 }

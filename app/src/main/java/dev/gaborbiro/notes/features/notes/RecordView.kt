@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.HideImage
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material3.Divider
@@ -48,6 +49,7 @@ fun RecordView(
     record: RecordUIModel,
     onUpdateImage: () -> Unit,
     onDeleteImage: () -> Unit,
+    onEditRecord: () -> Unit,
     onDeleteRecord: () -> Unit,
 ) {
     Row(
@@ -65,7 +67,7 @@ fun RecordView(
                 .weight(1f),
             record = record
         )
-        PopupMenu(onUpdateImage, onDeleteImage, onDeleteRecord)
+        PopupMenu(onUpdateImage, onDeleteImage, onEditRecord, onDeleteRecord)
     }
 }
 
@@ -113,6 +115,7 @@ private fun TitleAndSubtitle(modifier: Modifier, record: RecordUIModel) {
 private fun PopupMenu(
     onUpdateImage: () -> Unit,
     onDeleteImage: () -> Unit,
+    onEditRecord: () -> Unit,
     onDeleteRecord: () -> Unit,
 ) {
     PopUpMenuButton(
@@ -125,8 +128,13 @@ private fun PopupMenu(
             PopUpMenuItem(
                 icon = Icons.Outlined.HideImage,
                 label = "Delete image",
-                hasBottomDivider = true,
                 onMenuItemSelected = onDeleteImage,
+            ),
+            PopUpMenuItem(
+                icon = Icons.Outlined.Edit,
+                label = "Edit",
+                hasBottomDivider = true,
+                onMenuItemSelected = onEditRecord,
             ),
             PopUpMenuItem(
                 icon = Icons.Outlined.Delete,
