@@ -17,17 +17,18 @@ fun RecordsList(
     navigator: NotesWidgetNavigator,
 ) {
     val context = LocalContext.current
-    val mapper = RecordsUIMapper(BitmapLoader(context))
+    val bitmapLoader = BitmapLoader(context)
+    val mapper = RecordsUIMapper(bitmapLoader)
     val prefs = currentState<Preferences>()
     val records = mapper.map(prefs.retrieveRecords())
     LazyColumn(
-        modifier
+        modifier,
     ) {
-        items(records.size, itemId = { it.toLong() }) {
+        items(records.size, itemId = { records[it].recordId }) {
             val record = records[it]
             WidgetRecord(
                 record = record,
-                onWidgetTapAction = navigator.getDuplicateRecordAction(recordId = record.recordId)
+                onWidgetTapAction = navigator.getDuplicateRecordAction(recordId = record.recordId),
             )
         }
     }

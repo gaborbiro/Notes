@@ -3,35 +3,30 @@ package dev.gaborbiro.notes.features.host
 import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
+import androidx.annotation.UiThread
+import androidx.annotation.WorkerThread
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
-import dev.gaborbiro.notes.data.records.domain.model.Record
-import dev.gaborbiro.notes.data.records.domain.model.ToSaveRecord
-import dev.gaborbiro.notes.data.records.domain.model.ToSaveTemplate
-import dev.gaborbiro.notes.store.db.TransactionProvider
+import dev.gaborbiro.notes.features.common.BaseViewModel
 import dev.gaborbiro.notes.store.file.DocumentWriter
 import dev.gaborbiro.notes.util.BitmapLoader
 import dev.gaborbiro.notes.util.correctBitmap
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
-import java.time.LocalDateTime
 
 class HostViewModel(
     private val repository: RecordsRepository,
     private val documentWriter: DocumentWriter,
     private val bitmapLoader: BitmapLoader,
-    private val transactionProvider: TransactionProvider,
-) : ViewModel() {
+    private val createRecordUseCase: CreateRecordUseCase,
+    private val editRecordUseCase: EditRecordUseCase,
+) : BaseViewModel() {
 
     companion object {
         enum class EditTarget {
@@ -44,18 +39,21 @@ class HostViewModel(
 
     var toast: String? by mutableStateOf(null)
 
+    @UiThread
     fun initWithCamera() {
         _uiState.update {
             it.copy(showCamera = true)
         }
     }
 
+    @UiThread
     fun initWithImagePicker() {
         _uiState.update {
             it.copy(showImagePicker = true)
         }
     }
 
+    @UiThread
     fun initWithJustText() {
         _uiState.update {
             it.copy(
@@ -64,6 +62,7 @@ class HostViewModel(
         }
     }
 
+    @UiThread
     fun redoImage(templateId: Long) {
         _uiState.update {
             it.copy(
@@ -73,23 +72,26 @@ class HostViewModel(
         }
     }
 
+    @UiThread
     fun deleteRecord(recordId: Long) {
-        viewModelScope.launch {
+        runSafely {
             val (templateDeleted, imageDeleted) = repository.deleteRecordAndCleanupTemplate(recordId)
             Log.d("Notes", "template deleted: $templateDeleted, image deleted: $imageDeleted")
             _uiState.update {
-                it.copy(refreshWidgetAndCloseScreen = true)
+                it.copy(refreshWidget = true, closeScreen = true)
             }
         }
     }
 
+    @UiThread
     fun startWithEdit(recordId: Long) {
-        viewModelScope.launch {
+        runSafely {
             val record = repository.getRecord(recordId)!!
             _uiState.update {
                 it.copy(
                     dialog = DialogState.InputDialogState.Edit(
                         recordId = recordId,
+                        image = record.template.image,
                         title = record.template.name,
                         description = record.template.description,
                         validationError = null,
@@ -99,8 +101,9 @@ class HostViewModel(
         }
     }
 
+    @UiThread
     fun onPhotoTaken(currentScreenRotation: Int, bitmap: Bitmap?) {
-        viewModelScope.launch {
+        runSafely {
             val uri: Uri? =
                 bitmap?.let { persistImage(currentScreenRotation, it, correctRotation = true) }
             _uiState.update {
@@ -112,14 +115,16 @@ class HostViewModel(
         }
     }
 
+    @UiThread
     fun onImagePicked(currentScreenRotation: Int, uri: Uri?) {
-        viewModelScope.launch {
+        runSafely {
             val cachedUri = uri?.let { copyImage(currentScreenRotation, uri) }
             _uiState.value.templateIdForImageRedo?.let {
                 repository.updateTemplate(it, cachedUri)
                 _uiState.update {
                     it.copy(
-                        refreshWidgetAndCloseScreen = true,
+                        refreshWidget = true,
+                        closeScreen = true,
                         showImagePicker = false,
                         templateIdForImageRedo = null,
                     )
@@ -135,10 +140,11 @@ class HostViewModel(
         }
     }
 
+    @UiThread
     fun onDialogDismissed() {
         _uiState.update {
             it.copy(
-                refreshWidgetAndCloseScreen = true,
+                closeScreen = true,
                 dialog = null,
             )
         }
@@ -165,6 +171,7 @@ class HostViewModel(
         return uri
     }
 
+    @UiThread
     fun onRecordDetailsChanged(title: String, description: String) {
         _uiState.update {
             val dialogState: DialogState.InputDialogState? = it.requireDialog()
@@ -174,63 +181,46 @@ class HostViewModel(
         }
     }
 
+    @UiThread
     fun onRecordDetailsSubmitted(title: String, description: String) {
-        viewModelScope.launch(Dispatchers.IO) {
+        runSafely {
             var validationError: String? = null
             if (title.isBlank()) {
                 validationError = "Cannot be empty"
             }
+
             if (validationError != null) {
                 _uiState.update {
                     val dialogState: DialogState.InputDialogState? = it.requireDialog()
                     it.copy(
-                        dialog = dialogState?.withValidationError(validationError = null),
+                        dialog = dialogState?.withValidationError(validationError = validationError),
                     )
                 }
             } else {
                 val dialogState: DialogState.InputDialogState? = _uiState.value.requireDialog()
                 when (dialogState) {
                     is DialogState.InputDialogState.Create -> {
-                        createRecord(null, title, description)
-                        _uiState.update {
-                            it.copy(
-                                dialog = null,
-                                refreshWidgetAndCloseScreen = true,
-                            )
-                        }
+                        createRecord(
+                            image = null,
+                            title = title,
+                            description = description
+                        )
                     }
 
                     is DialogState.InputDialogState.CreateWithImage -> {
-                        createRecord(dialogState.image, title, description)
-                        _uiState.update {
-                            it.copy(
-                                dialog = null,
-                                refreshWidgetAndCloseScreen = true,
-                            )
-                        }
+                        createRecord(
+                            image = dialogState.image,
+                            title = title,
+                            description = description
+                        )
                     }
 
                     is DialogState.InputDialogState.Edit -> {
-                        val record = repository.getRecord(dialogState.recordId)!!
-                        val records = repository.getRecords(record.template.id)
-                        if (records.size < 2) {
-                            editRecord(
-                                record = record,
-                                title = title,
-                                description = description,
-                            )
-                        } else {
-                            _uiState.update {
-                                it.copy(
-                                    dialog = DialogState.EditTargetConfirmationDialog(
-                                        recordId = dialogState.recordId,
-                                        count = records.size,
-                                        newTitle = title,
-                                        newDescription = description,
-                                    ),
-                                )
-                            }
-                        }
+                        editRecord(
+                            recordId = dialogState.recordId,
+                            newTitle = title,
+                            newDescription = description
+                        )
                     }
 
                     null -> {
@@ -243,47 +233,82 @@ class HostViewModel(
         }
     }
 
-    private inline fun <reified T : DialogState> HostUIState.requireDialog(): T? {
-        if (this.dialog?.let { it is T } != true) throw IllegalArgumentException(
-            "Expected InputDialogState. Found ${this.dialog}"
-        )
-        return this.dialog as T?
+    private suspend fun createRecord(image: Uri?, title: String, description: String) {
+        createRecordUseCase.execute(image, title, description)
+        _uiState.update {
+            it.copy(
+                refreshWidget = true, closeScreen = true,
+            )
+        }
     }
 
+    @UiThread
+    private suspend fun editRecord(recordId: Long, newTitle: String, newDescription: String) {
+        val count = editRecordUseCase.execute(
+            recordId = recordId,
+            title = newTitle,
+            description = newDescription,
+            force = false,
+        )
+        if (count == null) {
+            _uiState.update {
+                it.copy(
+                    refreshWidget = true, closeScreen = true,
+                )
+            }
+        } else {
+            _uiState.update {
+                it.copy(
+                    dialog = DialogState.EditTargetConfirmationDialog(
+                        recordId = recordId,
+                        count = count,
+                        newTitle = newTitle,
+                        newDescription = newDescription,
+                    ),
+                )
+            }
+        }
+    }
+
+    @UiThread
     fun onEditTargetConfirmed(target: EditTarget) {
         val dialogState: DialogState.EditTargetConfirmationDialog? = _uiState.value.requireDialog()
         dialogState
             ?.let {
-                viewModelScope.launch(Dispatchers.IO) {
-                    val record = repository.getRecord(dialogState.recordId)!!
+                val recordId = dialogState.recordId
+                val title = dialogState.newTitle
+                val description = dialogState.newDescription
+                runOnBackgroundThread {
                     when (target) {
                         EditTarget.RECORD -> {
-                            editRecord(
-                                record = record,
-                                title = dialogState.newTitle,
-                                description = dialogState.newDescription,
+                            editRecordUseCase.execute(
+                                recordId = recordId,
+                                title = title,
+                                description = description,
+                                force = true,
                             )
                         }
 
                         EditTarget.TEMPLATE -> {
-                            editTemplate(
-                                record = record,
-                                title = dialogState.newTitle,
-                                description = dialogState.newDescription,
+                            doEditTemplate(
+                                recordId = recordId,
+                                title = title,
+                                description = description,
                             )
                         }
                     }
                     _uiState.update {
                         it.copy(
-                            dialog = null,
-                            refreshWidgetAndCloseScreen = true,
+                            refreshWidget = true, closeScreen = true,
                         )
                     }
                 }
             }
     }
 
-    private suspend fun editTemplate(record: Record, title: String, description: String) {
+    @WorkerThread
+    private suspend fun doEditTemplate(recordId: Long, title: String, description: String) {
+        val record = repository.getRecord(recordId)!!
         repository.updateTemplate(
             templateId = record.template.id,
             image = null,
@@ -292,31 +317,10 @@ class HostViewModel(
         )
     }
 
-    private suspend fun editRecord(record: Record, title: String, description: String) {
-        transactionProvider.runInTransaction {
-            val (templateDeleted, imageDeleted) = repository.deleteRecordAndCleanupTemplate(record.id)
-            Log.d("Notes", "template deleted: $templateDeleted, image deleted: $imageDeleted")
-            val newRecord = ToSaveRecord(
-                timestamp = record.timestamp,
-                template = ToSaveTemplate(
-                    image = record.template.image,
-                    name = title,
-                    description = description,
-                ),
-            )
-            repository.saveRecord(newRecord)
-        }
-    }
-
-    private suspend fun createRecord(imageUri: Uri?, title: String, description: String) {
-        val record = ToSaveRecord(
-            timestamp = LocalDateTime.now(),
-            template = ToSaveTemplate(
-                image = imageUri,
-                name = title,
-                description = description,
-            ),
+    private inline fun <reified T : DialogState> HostUIState.requireDialog(): T? {
+        if (this.dialog?.let { it is T } != true) throw IllegalArgumentException(
+            "Expected InputDialogState. Found ${this.dialog}"
         )
-        repository.saveRecord(record)
+        return this.dialog as T?
     }
 }

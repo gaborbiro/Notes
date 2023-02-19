@@ -1,6 +1,5 @@
 package dev.gaborbiro.notes.data.records
 
-import android.graphics.Bitmap
 import android.net.Uri
 import androidx.room.Transaction
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
@@ -10,13 +9,9 @@ import dev.gaborbiro.notes.store.db.records.RecordsDAO
 import dev.gaborbiro.notes.store.db.records.TemplatesDAO
 import dev.gaborbiro.notes.store.db.records.model.TemplateDBModel
 import dev.gaborbiro.notes.store.file.DocumentDeleter
-import dev.gaborbiro.notes.store.file.DocumentWriter
-import dev.gaborbiro.notes.util.BitmapLoader
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import java.time.LocalDateTime
 
 class RecordsRepositoryImpl(

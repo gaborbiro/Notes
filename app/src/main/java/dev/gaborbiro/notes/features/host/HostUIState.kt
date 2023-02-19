@@ -5,7 +5,8 @@ import android.net.Uri
 data class HostUIState(
     val showCamera: Boolean = false,
     val showImagePicker: Boolean = false,
-    val refreshWidgetAndCloseScreen: Boolean = false,
+    val refreshWidget: Boolean = false,
+    val closeScreen: Boolean = false,
     val templateIdForImageRedo: Long? = null,
     val dialog: DialogState? = null,
 )
@@ -38,6 +39,7 @@ sealed class DialogState {
 
         data class Edit(
             val recordId: Long,
+            val image: Uri?,
             val title: String,
             val description: String,
             override val validationError: String? = null,

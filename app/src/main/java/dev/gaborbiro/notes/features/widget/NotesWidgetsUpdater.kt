@@ -53,7 +53,7 @@ class NotesWidgetsUpdater(
 
     override suspend fun doWork(): Result {
         return try {
-            val records: List<Record> = RecordsRepository.get().getRecords()
+            val records: List<Record> = RecordsRepository.get().getRecords().take(100)
             sendToWidgets(applicationContext, records)
             Result.success()
         } catch (t: Throwable) {

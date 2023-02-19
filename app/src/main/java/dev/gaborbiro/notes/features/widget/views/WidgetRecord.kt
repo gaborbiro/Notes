@@ -31,7 +31,7 @@ import dev.gaborbiro.notes.ui.theme.PaddingHalfWidget
 @Composable
 fun WidgetRecord(
     record: RecordUIModel,
-    onWidgetTapAction: Action
+    onWidgetTapAction: Action,
 ) {
     Row(
         modifier = GlanceModifier

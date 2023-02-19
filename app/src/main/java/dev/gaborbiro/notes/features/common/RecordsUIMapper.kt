@@ -34,6 +34,7 @@ class RecordsUIMapper(
         return RecordUIModel(
             recordId = record.id,
             templateId = record.template.id,
+            image = record.template.image,
             bitmap = bitmap,
             timestamp = timestampStr,
             title = record.template.name
