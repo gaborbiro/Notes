@@ -22,6 +22,7 @@ import dev.gaborbiro.notes.features.common.RecordsUIMapper
 import dev.gaborbiro.notes.features.common.model.RecordUIModel
 import dev.gaborbiro.notes.features.widget.NotesWidgetsUpdater
 import dev.gaborbiro.notes.ui.theme.PaddingDefault
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -36,6 +37,12 @@ fun NotesListScreen(
         .collectAsStateWithLifecycle(initialValue = emptyList())
 
     NotesList(records.value.map { uiMapper.map(it) },
+        onDuplicateRecord = { record ->
+            coroutineScope.launch {
+                repository.duplicateRecord(record.recordId)
+                NotesWidgetsUpdater.oneOffUpdate(context)
+            }
+        },
         onUpdateImage = { record ->
             navigator.updateRecordPhoto(record.templateId)
         },
@@ -50,7 +57,9 @@ fun NotesListScreen(
         },
         onDeleteRecord = { record ->
             coroutineScope.launch {
-                val (templateDeleted, imageDeleted) = repository.deleteRecordAndCleanupTemplate(record.recordId)
+                val (templateDeleted, imageDeleted) = repository.deleteRecordAndCleanupTemplate(
+                    record.recordId
+                )
                 Log.d("Notes", "template deleted: $templateDeleted, image deleted: $imageDeleted")
                 NotesWidgetsUpdater.oneOffUpdate(context)
             }
@@ -60,12 +69,14 @@ fun NotesListScreen(
 @Composable
 private fun NotesList(
     records: List<RecordUIModel>,
+    onDuplicateRecord: (RecordUIModel) -> Unit,
     onUpdateImage: (RecordUIModel) -> Unit,
     onDeleteImage: (RecordUIModel) -> Unit,
     onEditRecord: (RecordUIModel) -> Unit,
     onDeleteRecord: (RecordUIModel) -> Unit,
 ) {
     val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
 
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(PaddingDefault),
@@ -79,6 +90,13 @@ private fun NotesList(
             RecordView(
                 modifier = Modifier.animateItemPlacement(),
                 record = record,
+                onDuplicateRecord = {
+                    onDuplicateRecord(record)
+                    coroutineScope.launch {
+                        delay(200L)
+                        listState.scrollToItem(0)
+                    }
+                },
                 onUpdateImage = { onUpdateImage(record) },
                 onDeleteImage = { onDeleteImage(record) },
                 onEditRecord = { onEditRecord(record) },
@@ -86,5 +104,5 @@ private fun NotesList(
             )
         }
     }
-    ScrollToTopView(listState, rememberCoroutineScope())
+    ScrollToTopView()
 }

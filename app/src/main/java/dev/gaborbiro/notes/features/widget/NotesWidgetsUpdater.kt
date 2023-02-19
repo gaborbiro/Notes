@@ -13,7 +13,9 @@ import androidx.work.WorkerParameters
 import com.google.gson.reflect.TypeToken
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.data.records.domain.model.Record
+import dev.gaborbiro.notes.data.records.domain.model.Template
 import dev.gaborbiro.notes.util.gson
+import java.time.LocalDateTime
 
 class NotesWidgetsUpdater(
     appContext: Context,
@@ -38,13 +40,19 @@ class NotesWidgetsUpdater(
             }
         }
 
-        suspend fun sendToWidgets(context: Context, records: List<Record>) {
+        suspend fun sendToWidgets(
+            context: Context,
+            recentRecords: List<Record>,
+            topTemplates: List<Template>
+        ) {
             val glanceIds = GlanceAppWidgetManager(context)
                 .getGlanceIds(NotesWidget::class.java)
-            val recordsJson = gson.toJson(records)
+            val recordsJson = gson.toJson(recentRecords)
+            val templatesJson = gson.toJson(topTemplates)
             glanceIds.forEach { glanceId ->
                 updateAppWidgetState(context, glanceId) { prefs ->
-                    prefs[stringPreferencesKey(NotesWidget.PREFS_ENTRIES)] = recordsJson
+                    prefs[stringPreferencesKey(NotesWidget.PREFS_RECENT_RECORDS)] = recordsJson
+                    prefs[stringPreferencesKey(NotesWidget.PREFS_TOP_TEMPLATES)] = templatesJson
                 }
             }
             NotesWidget().updateAll(context)
@@ -53,8 +61,11 @@ class NotesWidgetsUpdater(
 
     override suspend fun doWork(): Result {
         return try {
-            val records: List<Record> = RecordsRepository.get().getRecords().take(100)
-            sendToWidgets(applicationContext, records)
+            val repository = RecordsRepository.get()
+            val recentRecords: List<Record> =
+                repository.getRecords(LocalDateTime.now().minusDays(3))
+            val topTemplates: List<Template> = repository.getTemplatesByFrequency().take(30)
+            sendToWidgets(applicationContext, recentRecords, topTemplates)
             Result.success()
         } catch (t: Throwable) {
             t.printStackTrace()
@@ -63,11 +74,21 @@ class NotesWidgetsUpdater(
     }
 }
 
-fun Preferences.retrieveRecords(): List<Record> {
-    val recordsJSON = this[stringPreferencesKey(NotesWidget.PREFS_ENTRIES)]
+fun Preferences.retrieveRecentRecords(): List<Record> {
+    val recordsJSON = this[stringPreferencesKey(NotesWidget.PREFS_RECENT_RECORDS)]
     return recordsJSON
         ?.let {
             val itemType = object : TypeToken<List<Record>>() {}.type
+            gson.fromJson(recordsJSON, itemType)
+        }
+        ?: emptyList()
+}
+
+fun Preferences.retrieveTopTemplates(): List<Template> {
+    val recordsJSON = this[stringPreferencesKey(NotesWidget.PREFS_TOP_TEMPLATES)]
+    return recordsJSON
+        ?.let {
+            val itemType = object : TypeToken<List<Template>>() {}.type
             gson.fromJson(recordsJSON, itemType)
         }
         ?: emptyList()

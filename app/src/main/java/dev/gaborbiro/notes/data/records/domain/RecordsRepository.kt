@@ -5,10 +5,12 @@ import dev.gaborbiro.notes.App
 import dev.gaborbiro.notes.data.records.DBMapper
 import dev.gaborbiro.notes.data.records.RecordsRepositoryImpl
 import dev.gaborbiro.notes.data.records.domain.model.Record
+import dev.gaborbiro.notes.data.records.domain.model.Template
 import dev.gaborbiro.notes.data.records.domain.model.ToSaveRecord
 import dev.gaborbiro.notes.store.db.AppDatabase
 import dev.gaborbiro.notes.store.file.DocumentDeleter
 import kotlinx.coroutines.flow.Flow
+import java.time.LocalDateTime
 
 interface RecordsRepository {
 
@@ -31,7 +33,9 @@ interface RecordsRepository {
         }
     }
 
-    suspend fun getRecords(): List<Record>
+    suspend fun getRecords(since: LocalDateTime? = null): List<Record>
+
+    suspend fun getTemplatesByFrequency(): List<Template>
 
     suspend fun getRecords(templateId: Long): List<Record>
 
@@ -42,6 +46,8 @@ interface RecordsRepository {
     suspend fun saveRecord(record: ToSaveRecord): Long
 
     suspend fun duplicateRecord(recordId: Long): Long
+
+    suspend fun applyTemplate(templateId: Long): Long
 
 
     /**

@@ -19,6 +19,8 @@ interface NotesWidgetNavigator {
     fun getLaunchNewNoteViaTextOnlyAction(): Action
 
     fun getDuplicateRecordAction(recordId: Long): Action
+
+    fun getApplyTemplateAction(templateId: Long): Action
 }
 
 class NotesWidgetNavigatorImpl : NotesWidgetNavigator {
@@ -39,6 +41,14 @@ class NotesWidgetNavigatorImpl : NotesWidgetNavigator {
         return actionRunCallback<DuplicateNoteAction>(
             actionParametersOf(
                 ActionParameters.Key<Long>(PREFS_KEY_RECORD) to recordId
+            )
+        )
+    }
+
+    override fun getApplyTemplateAction(templateId: Long): Action {
+        return actionRunCallback<ApplyTemplateAction>(
+            actionParametersOf(
+                ActionParameters.Key<Long>(PREFS_KEY_TEMPLATE) to templateId
             )
         )
     }
@@ -94,4 +104,18 @@ class DuplicateNoteAction : ActionCallback {
     }
 }
 
-private const val PREFS_KEY_RECORD = "record"
+class ApplyTemplateAction : ActionCallback {
+
+    override suspend fun onAction(
+        context: Context,
+        glanceId: GlanceId,
+        parameters: ActionParameters
+    ) {
+        val templateId = parameters[ActionParameters.Key<Long>(PREFS_KEY_TEMPLATE)]!!
+        RecordsRepository.get().applyTemplate(templateId)
+        NotesWidgetsUpdater.oneOffUpdate(context)
+    }
+}
+
+private const val PREFS_KEY_RECORD = "recordId"
+private const val PREFS_KEY_TEMPLATE = "templateId"

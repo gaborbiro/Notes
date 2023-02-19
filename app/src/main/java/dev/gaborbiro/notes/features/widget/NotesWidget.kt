@@ -12,7 +12,8 @@ import dev.gaborbiro.notes.features.widget.views.NotesWidgetContent
 class NotesWidget : GlanceAppWidget() {
 
     companion object {
-        const val PREFS_ENTRIES = "entries"
+        const val PREFS_RECENT_RECORDS = "recent_records"
+        const val PREFS_TOP_TEMPLATES = "top_templates"
     }
 
     override val stateDefinition = NotesWidgetPreferences

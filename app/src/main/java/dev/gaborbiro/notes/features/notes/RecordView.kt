@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.FileCopy
 import androidx.compose.material.icons.outlined.HideImage
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material3.Divider
@@ -47,6 +48,7 @@ import dev.gaborbiro.notes.ui.theme.PaddingQuarter
 fun RecordView(
     modifier: Modifier = Modifier,
     record: RecordUIModel,
+    onDuplicateRecord: () -> Unit,
     onUpdateImage: () -> Unit,
     onDeleteImage: () -> Unit,
     onEditRecord: () -> Unit,
@@ -67,7 +69,7 @@ fun RecordView(
                 .weight(1f),
             record = record
         )
-        PopupMenu(onUpdateImage, onDeleteImage, onEditRecord, onDeleteRecord)
+        PopupMenu(onDuplicateRecord, onUpdateImage, onDeleteImage, onEditRecord, onDeleteRecord)
     }
 }
 
@@ -113,6 +115,7 @@ private fun TitleAndSubtitle(modifier: Modifier, record: RecordUIModel) {
 
 @Composable
 private fun PopupMenu(
+    onDuplicateRecord: () -> Unit,
     onUpdateImage: () -> Unit,
     onDeleteImage: () -> Unit,
     onEditRecord: () -> Unit,
@@ -120,6 +123,12 @@ private fun PopupMenu(
 ) {
     PopUpMenuButton(
         options = listOf(
+            PopUpMenuItem(
+                icon = Icons.Outlined.FileCopy,
+                label = "Copy record",
+                onMenuItemSelected = onDuplicateRecord,
+                hasBottomDivider = true,
+            ),
             PopUpMenuItem(
                 icon = Icons.Outlined.Image,
                 label = "Update image",
@@ -196,7 +205,7 @@ private fun PopUpMenuButton(
                         }
                     )
                     if (item.hasBottomDivider) {
-                        Divider()
+                        Divider(color = MaterialTheme.colorScheme.onPrimaryContainer)
                     }
                 }
             }

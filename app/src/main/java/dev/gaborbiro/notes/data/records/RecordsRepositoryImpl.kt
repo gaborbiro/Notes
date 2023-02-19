@@ -4,9 +4,11 @@ import android.net.Uri
 import androidx.room.Transaction
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.data.records.domain.model.Record
+import dev.gaborbiro.notes.data.records.domain.model.Template
 import dev.gaborbiro.notes.data.records.domain.model.ToSaveRecord
 import dev.gaborbiro.notes.store.db.records.RecordsDAO
 import dev.gaborbiro.notes.store.db.records.TemplatesDAO
+import dev.gaborbiro.notes.store.db.records.model.RecordDBModel
 import dev.gaborbiro.notes.store.db.records.model.TemplateDBModel
 import dev.gaborbiro.notes.store.file.DocumentDeleter
 import kotlinx.coroutines.flow.Flow
@@ -23,7 +25,7 @@ class RecordsRepositoryImpl(
 //    private val documentWriter: DocumentWriter,
 ) : RecordsRepository {
 
-    override suspend fun getRecords(): List<Record> {
+    override suspend fun getRecords(since: LocalDateTime? /* = null */): List<Record> {
 //        templatesDAO.get().forEach { template ->
 //            if (template.image?.toString()?.contains("cache") == true) {
 //                val bitmap = bitmapLoader.loadBitmap(template.image)!!
@@ -43,7 +45,16 @@ class RecordsRepositoryImpl(
 //                println(id)
 //            }
 //        }
-        return mapper.map(recordsDAO.get())
+        val records = recordsDAO.get()
+        val filteredRecords = since
+            ?.let {
+                records.filter { it.record.timestamp >= since }
+            } ?: records
+        return mapper.map(filteredRecords)
+    }
+
+    override suspend fun getTemplatesByFrequency(): List<Template> {
+        return templatesDAO.getByFrequency().map(mapper::map)
     }
 
     override suspend fun getRecords(templateId: Long): List<Record> {
@@ -76,6 +87,10 @@ class RecordsRepositoryImpl(
         val templateId = recordsDAO.get(recordId)!!.template.id!!
         recordsDAO.delete(recordId)
         return deleteTemplateIfUnused(templateId)
+    }
+
+    override suspend fun applyTemplate(templateId: Long): Long {
+        return recordsDAO.insert(RecordDBModel(LocalDateTime.now(), templateId))
     }
 
     override suspend fun updateTemplate(
