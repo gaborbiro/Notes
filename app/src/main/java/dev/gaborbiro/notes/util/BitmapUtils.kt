@@ -1,27 +1,9 @@
 package dev.gaborbiro.notes.util
 
-import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.ImageDecoder
 import android.graphics.Matrix
-import android.net.Uri
 import android.view.Surface
-import java.io.FileNotFoundException
 
-class BitmapLoader(
-    private val context: Context,
-) {
-
-    fun loadBitmap(uri: Uri): Bitmap? {
-        try {
-            return ImageDecoder.decodeBitmap(
-                ImageDecoder.createSource(context.contentResolver, uri)
-            )
-        } catch (e: FileNotFoundException) {
-            return null
-        }
-    }
-}
 
 fun correctBitmap(
     currentScreenRotation: Int,

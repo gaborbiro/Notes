@@ -19,7 +19,10 @@ interface TemplatesDAO {
     suspend fun get(): List<TemplateDBModel>
 
     @Query("SELECT * FROM templates WHERE image=:image")
-    suspend fun getByImage(image: Uri?): List<TemplateDBModel>
+    suspend fun get(image: Uri?): List<TemplateDBModel>
+
+    @Query("SELECT * FROM templates WHERE image=:image AND name=:name")
+    suspend fun get(image: Uri, name: String): List<TemplateDBModel>
 
     @Query("DELETE FROM templates WHERE _id = :id")
     suspend fun delete(id: Long): Int

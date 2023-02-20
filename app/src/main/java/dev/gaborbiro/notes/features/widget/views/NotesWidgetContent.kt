@@ -12,11 +12,13 @@ import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.wrapContentHeight
 import androidx.glance.unit.ColorProvider
 import dev.gaborbiro.notes.features.widget.NotesWidgetNavigator
+import dev.gaborbiro.notes.store.bitmap.BitmapStore
 
 @Composable
 fun NotesWidgetContent(
     modifier: GlanceModifier,
     navigator: NotesWidgetNavigator,
+    bitmapStore: BitmapStore,
 ) {
     Column(
         modifier = modifier
@@ -30,14 +32,15 @@ fun NotesWidgetContent(
             modifier = GlanceModifier
                 .fillMaxWidth()
                 .defaultWeight(),
-            navigator
+            navigator = navigator,
+            bitmapStore = bitmapStore,
         )
         WidgetButtonLayout(
             modifier = GlanceModifier
                 .fillMaxWidth()
                 .defaultWeight()
                 .wrapContentHeight(),
-            navigator
+            navigator = navigator,
         )
     }
 }

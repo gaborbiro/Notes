@@ -4,8 +4,8 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.gaborbiro.notes.features.common.model.ErrorUIModel
+import ellipsize
 import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,22 +17,25 @@ abstract class BaseViewModel : ViewModel() {
     private val _errorState: MutableStateFlow<ErrorUIModel?> = MutableStateFlow(null)
     val errorState: StateFlow<ErrorUIModel?> = _errorState.asStateFlow()
 
-    fun runOnBackgroundThread(task: suspend () -> Unit) {
-        viewModelScope.launch(coroutineExceptionHandler) {
-            launch(Dispatchers.IO) { task() }
-        }
-    }
-
 
     protected fun runSafely(task: suspend () -> Unit) {
-        viewModelScope.launch(coroutineExceptionHandler) {
+        viewModelScope.launch(deleteExceptionHandler) {
             task()
         }
     }
 
-    private val coroutineExceptionHandler = CoroutineExceptionHandler { _, exception ->
+    private val deleteExceptionHandler = CoroutineExceptionHandler { _, exception ->
         _errorState.update {
-            ErrorUIModel("Oops. Something went wrong")
+            ErrorUIModel(
+                "Oops. Something went wrong ${
+                    exception.message?.let {
+                        "\n\n(${
+                            it.ellipsize(
+                                300
+                            )
+                        })"
+                    } ?: ""
+                }")
         }
         Log.w("BaseViewModel", "Uncaught exception", exception)
     }

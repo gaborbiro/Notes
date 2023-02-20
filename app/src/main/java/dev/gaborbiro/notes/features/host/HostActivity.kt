@@ -3,17 +3,23 @@ package dev.gaborbiro.notes.features.host
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.os.bundleOf
@@ -21,13 +27,19 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.features.common.BaseErrorDialogActivity
 import dev.gaborbiro.notes.features.common.BaseViewModel
+import dev.gaborbiro.notes.features.host.usecase.CacheImageUseCase
+import dev.gaborbiro.notes.features.host.usecase.CreateRecordUseCase
+import dev.gaborbiro.notes.features.host.usecase.EditRecordUseCase
+import dev.gaborbiro.notes.features.host.usecase.EditTemplateUseCase
+import dev.gaborbiro.notes.features.host.usecase.PersistNewPhotoUseCase
+import dev.gaborbiro.notes.features.host.usecase.ValidateCreateRecordUseCase
+import dev.gaborbiro.notes.features.host.usecase.ValidateEditRecordUseCase
 import dev.gaborbiro.notes.features.host.views.EditTarget
 import dev.gaborbiro.notes.features.host.views.EditTargetConfirmationDialogContent
 import dev.gaborbiro.notes.features.host.views.NoteInputDialogContent
 import dev.gaborbiro.notes.features.widget.NotesWidgetsUpdater
-import dev.gaborbiro.notes.store.file.DocumentWriter
+import dev.gaborbiro.notes.store.bitmap.BitmapStore
 import dev.gaborbiro.notes.ui.theme.NotesTheme
-import dev.gaborbiro.notes.util.BitmapLoader
 
 
 class HostActivity : BaseErrorDialogActivity() {
@@ -76,7 +88,7 @@ class HostActivity : BaseErrorDialogActivity() {
         private fun launchActivity(
             appContext: Context,
             intent: Intent,
-            vararg extras: Pair<String, out Any>
+            vararg extras: Pair<String, Any>
         ) {
             appContext.startActivity(intent.apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -101,12 +113,16 @@ class HostActivity : BaseErrorDialogActivity() {
 
     private val viewModel by lazy {
         val repository = RecordsRepository.get()
+        val bitmapStore = BitmapStore(this)
         HostViewModel(
             repository,
-            DocumentWriter(this),
-            BitmapLoader(this),
             CreateRecordUseCase(repository),
             EditRecordUseCase(repository),
+            EditTemplateUseCase(repository),
+            ValidateEditRecordUseCase(repository),
+            ValidateCreateRecordUseCase(),
+            PersistNewPhotoUseCase(bitmapStore),
+            CacheImageUseCase(bitmapStore)
         )
     }
 
@@ -125,13 +141,13 @@ class HostActivity : BaseErrorDialogActivity() {
         intent.removeExtra(EXTRA_ACTION) // consume intent
 
         when (action) {
-            Action.CAMERA -> viewModel.initWithCamera()
-            Action.PICK_IMAGE -> viewModel.initWithImagePicker()
-            Action.TEXT_ONLY -> viewModel.initWithJustText()
+            Action.CAMERA -> viewModel.onStartWithCamera()
+            Action.PICK_IMAGE -> viewModel.onStartWithImagePicker()
+            Action.TEXT_ONLY -> viewModel.onStartWithJustText()
 
             Action.REDO_IMAGE -> {
                 val templateId = intent.getLongExtra(EXTRA_TEMPLATE_ID, -1L)
-                viewModel.redoImage(templateId)
+                viewModel.onStartWithRedoImage(templateId)
             }
 
 //            Action.DELETE -> {
@@ -142,7 +158,7 @@ class HostActivity : BaseErrorDialogActivity() {
 
             Action.EDIT -> {
                 val recordId = intent.getLongExtra(EXTRA_RECORD_ID, -1L)
-                viewModel.startWithEdit(recordId)
+                viewModel.onStartWithEdit(recordId)
             }
 
             null -> {
@@ -186,11 +202,6 @@ class HostActivity : BaseErrorDialogActivity() {
                 Dialog(viewModel.uiState.collectAsStateWithLifecycle().value.dialog)
             }
 
-            viewModel.toast?.let {
-                viewModel.toast = null
-                Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
-            }
-
             if (uiState.closeScreen) {
                 finish()
             }
@@ -208,9 +219,12 @@ class HostActivity : BaseErrorDialogActivity() {
         }
     }
 
+    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun InputDialog(dialogState: DialogState.InputDialogState) {
-        Dialog(onDismissRequest = { viewModel.onDialogDismissed() }) {
+        Dialog(
+            onDismissRequest = { viewModel.onDialogDismissed() },
+        ) {
 //            val image = (dialogState as? DialogState.InputDialogState.Edit)?.image
             val title = (dialogState as? DialogState.InputDialogState.Edit)?.title
             val description = (dialogState as? DialogState.InputDialogState.Edit)?.description
@@ -218,14 +232,16 @@ class HostActivity : BaseErrorDialogActivity() {
                 shape = RoundedCornerShape(16.dp),
                 color = MaterialTheme.colorScheme.primaryContainer,
                 shadowElevation = 4.dp,
+                modifier = Modifier
+                    .wrapContentHeight()
             ) {
                 NoteInputDialogContent(
                     onCancel = { viewModel.onDialogDismissed() },
                     onSubmit = { title, description ->
-                        viewModel.onRecordDetailsSubmitted(title, description)
+                        viewModel.onRecordDetailsSubmitRequested(title, description)
                     },
                     onChange = { title, description ->
-                        viewModel.onRecordDetailsChanged(title, description)
+                        viewModel.onRecordDetailsUserTyping(title, description)
                     },
                     title = title,
                     description = description,

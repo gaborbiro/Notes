@@ -4,10 +4,12 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.LocalContext
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.layout.fillMaxSize
 import dev.gaborbiro.notes.features.widget.views.NotesWidgetContent
+import dev.gaborbiro.notes.store.bitmap.BitmapStore
 
 class NotesWidget : GlanceAppWidget() {
 
@@ -23,7 +25,8 @@ class NotesWidget : GlanceAppWidget() {
         NotesWidgetContent(
             modifier = GlanceModifier
                 .fillMaxSize(),
-            navigator = NotesWidgetNavigatorImpl()
+            navigator = NotesWidgetNavigatorImpl(),
+            bitmapStore = BitmapStore(LocalContext.current)
         )
     }
 

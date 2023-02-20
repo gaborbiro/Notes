@@ -54,6 +54,10 @@ class RecordsRepositoryImpl(
         return mapper.map(filteredRecords)
     }
 
+    override suspend fun getTemplates(image: Uri, title: String): List<Template> {
+        return templatesDAO.get(image, title).map { mapper.map(it) }
+    }
+
     override suspend fun getTemplatesByFrequency(): List<Template> {
         return templatesDAO.getByFrequency().map(mapper::map)
     }
@@ -159,7 +163,7 @@ class RecordsRepositoryImpl(
     }
 
     private suspend fun deleteImageIfUnused(image: Uri): Boolean {
-        if (templatesDAO.getByImage(image).isEmpty()) {
+        if (templatesDAO.get(image).isEmpty()) {
             return documentDeleter.delete(image)
         }
         return false

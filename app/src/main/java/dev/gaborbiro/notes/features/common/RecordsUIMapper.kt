@@ -3,14 +3,14 @@ package dev.gaborbiro.notes.features.common
 import android.graphics.Bitmap
 import dev.gaborbiro.notes.data.records.domain.model.Record
 import dev.gaborbiro.notes.features.common.model.RecordUIModel
-import dev.gaborbiro.notes.util.BitmapLoader
+import dev.gaborbiro.notes.store.bitmap.BitmapStore
 import dev.gaborbiro.notes.util.formatShort
 import dev.gaborbiro.notes.util.formatShortTime
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
 class RecordsUIMapper(
-    private val bitmapLoader: BitmapLoader,
+    private val bitmapStore: BitmapStore,
 ) {
 
     fun map(records: List<Record>): List<RecordUIModel> {
@@ -18,7 +18,7 @@ class RecordsUIMapper(
     }
 
     fun map(record: Record): RecordUIModel {
-        val bitmap: Bitmap? = record.template.image?.let { bitmapLoader.loadBitmap(it) }
+        val bitmap: Bitmap? = record.template.image?.let { bitmapStore.loadBitmap(it) }
         val timestamp = record.timestamp
         val timestampStr = when {
             !timestamp.isBefore(LocalDateTime.now().truncatedTo(ChronoUnit.DAYS)) -> {

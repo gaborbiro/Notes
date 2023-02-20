@@ -15,13 +15,15 @@ import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.features.common.RecordsUIMapper
 import dev.gaborbiro.notes.features.notes.NotesListNavigatorImpl
 import dev.gaborbiro.notes.features.notes.NotesListScreen
+import dev.gaborbiro.notes.store.bitmap.BitmapStore
 import dev.gaborbiro.notes.ui.theme.NotesTheme
-import dev.gaborbiro.notes.util.BitmapLoader
 
 class NavigationActivity : ComponentActivity() {
 
     private val repository by lazy { RecordsRepository.get() }
-    private val uiMapper: RecordsUIMapper by lazy { RecordsUIMapper(BitmapLoader(this)) }
+    private val uiMapper: RecordsUIMapper by lazy {
+        RecordsUIMapper(BitmapStore(context = this))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

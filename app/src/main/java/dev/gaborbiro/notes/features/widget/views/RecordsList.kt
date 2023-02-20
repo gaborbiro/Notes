@@ -3,7 +3,6 @@ package dev.gaborbiro.notes.features.widget.views
 import androidx.compose.runtime.Composable
 import androidx.datastore.preferences.core.Preferences
 import androidx.glance.GlanceModifier
-import androidx.glance.LocalContext
 import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.currentState
 import dev.gaborbiro.notes.features.common.RecordsUIMapper
@@ -11,17 +10,16 @@ import dev.gaborbiro.notes.features.common.TemplatesUIMapper
 import dev.gaborbiro.notes.features.widget.NotesWidgetNavigator
 import dev.gaborbiro.notes.features.widget.retrieveRecentRecords
 import dev.gaborbiro.notes.features.widget.retrieveTopTemplates
-import dev.gaborbiro.notes.util.BitmapLoader
+import dev.gaborbiro.notes.store.bitmap.BitmapStore
 
 @Composable
 fun RecordsList(
     modifier: GlanceModifier,
     navigator: NotesWidgetNavigator,
+    bitmapStore: BitmapStore,
 ) {
-    val context = LocalContext.current
-    val bitmapLoader = BitmapLoader(context)
-    val recordsUIMapper = RecordsUIMapper(bitmapLoader)
-    val templatesUIMapper = TemplatesUIMapper(bitmapLoader)
+    val recordsUIMapper = RecordsUIMapper(bitmapStore)
+    val templatesUIMapper = TemplatesUIMapper(bitmapStore)
     val prefs = currentState<Preferences>()
     val recentRecords = recordsUIMapper.map(prefs.retrieveRecentRecords())
     val topTemplates = templatesUIMapper.map(prefs.retrieveTopTemplates())

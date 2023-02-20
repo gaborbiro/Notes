@@ -33,6 +33,8 @@ interface RecordsRepository {
         }
     }
 
+    suspend fun getTemplates(image: Uri, title: String): List<Template>
+
     suspend fun getRecords(since: LocalDateTime? = null): List<Record>
 
     suspend fun getTemplatesByFrequency(): List<Template>

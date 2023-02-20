@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -63,9 +64,14 @@ fun NoteInputDialogContent(
         onSubmit(titleState.trim(), descriptionState.trim())
     }
 
-    Column(modifier = Modifier.padding(PaddingDefault)) {
+    Column(
+        modifier = Modifier.padding(PaddingDefault),
+        verticalArrangement = Arrangement.SpaceBetween,
+    ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -91,6 +97,7 @@ fun NoteInputDialogContent(
         TextField(
             modifier = Modifier
                 .fillMaxWidth()
+                .wrapContentHeight()
                 .focusRequester(focusRequester),
             isError = error.isNullOrBlank().not(),
             colors = TextFieldDefaults.textFieldColors(
@@ -100,7 +107,7 @@ fun NoteInputDialogContent(
             maxLines = 1,
             placeholder = {
                 Text(
-                    text = error ?: "Name",
+                    text = "Title",
                     color = Color.Gray,
                     style = MaterialTheme.typography.bodyMedium,
                 )
@@ -116,8 +123,19 @@ fun NoteInputDialogContent(
                 onChange(titleState, descriptionState)
             },
         )
+        if (error.isNullOrBlank().not()) {
+            Text(
+                text = error!!,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier
+                    .height(24.dp),
+            )
+        } else {
+            Spacer(modifier = Modifier.height(24.dp))
+        }
 
-        Spacer(modifier = Modifier.size(PaddingDefault))
+        Spacer(modifier = Modifier.height(PaddingDefault))
 
         TextField(
             modifier = Modifier
