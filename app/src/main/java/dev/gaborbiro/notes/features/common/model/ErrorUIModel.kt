@@ -1,4 +1,5 @@
 package dev.gaborbiro.notes.features.common.model
 
-class ErrorUIModel {
-}
+class ErrorUIModel(
+    val message: String
+)

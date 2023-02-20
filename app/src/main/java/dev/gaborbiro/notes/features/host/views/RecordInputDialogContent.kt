@@ -1,4 +1,4 @@
-package dev.gaborbiro.notes.features.host.dialog
+package dev.gaborbiro.notes.features.host.views
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -37,6 +37,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import dev.gaborbiro.notes.ui.theme.PaddingDefault
+import dev.gaborbiro.notes.ui.theme.PaddingDouble
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -71,12 +72,12 @@ fun NoteInputDialogContent(
             Text(
                 text = "Add a note",
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleMedium,
             )
             Icon(
                 imageVector = Icons.Filled.Cancel,
                 tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                contentDescription = "Cancel",
+                contentDescription = "cancel",
                 modifier = Modifier
                     .size(30.dp)
                     .clickable {
@@ -144,7 +145,7 @@ fun NoteInputDialogContent(
             },
         )
 
-        Spacer(modifier = Modifier.size(PaddingDefault))
+        Spacer(modifier = Modifier.height(PaddingDouble))
 
         Button(
             onClick = onDone,

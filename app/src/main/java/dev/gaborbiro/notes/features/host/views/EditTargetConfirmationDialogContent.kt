@@ -1,4 +1,4 @@
-package dev.gaborbiro.notes.features.host.dialog
+package dev.gaborbiro.notes.features.host.views
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column

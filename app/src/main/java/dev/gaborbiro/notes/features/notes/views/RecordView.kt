@@ -1,3 +1,5 @@
+package dev.gaborbiro.notes.features.notes.views
+
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
