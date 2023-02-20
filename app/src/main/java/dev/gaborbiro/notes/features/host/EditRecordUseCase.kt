@@ -1,6 +1,5 @@
 package dev.gaborbiro.notes.features.host
 
-import android.database.sqlite.SQLiteConstraintException
 import android.util.Log
 import androidx.annotation.UiThread
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
@@ -17,28 +16,26 @@ class EditRecordUseCase(
      */
     @UiThread
     suspend fun execute(recordId: Long, title: String, description: String, force: Boolean): Int? {
-        return try {
-            val record = repository.getRecord(recordId)
-            val records = repository.getRecords(record!!.template.id)
-            if (force || records.size < 2) {
-                val newRecord = ToSaveRecord(
-                    timestamp = record.timestamp,
-                    template = ToSaveTemplate(
-                        image = record.template.image,
-                        name = title,
-                        description = description,
-                    ),
-                )
-                repository.saveRecord(newRecord)
-                val (templateDeleted, imageDeleted) =
-                    repository.deleteRecordAndCleanupTemplate(recordId)
-                Log.d("Notes", "template deleted: $templateDeleted, image deleted: $imageDeleted")
-                null
-            } else {
-                records.size
-            }
-        } catch (e: SQLiteConstraintException) {
+        val record = repository.getRecord(recordId)
+        val records = repository.getRecords(record!!.template.id)
+        return if (force || records.size < 2) {
+            val newRecord = ToSaveRecord(
+                timestamp = record.timestamp,
+                template = ToSaveTemplate(
+                    image = record.template.image,
+                    name = title,
+                    description = description,
+                ),
+            )
+            repository.saveRecord(newRecord)
+            repository.deleteRecord(recordId)
+            val (templateDeleted, imageDeleted) =
+                repository.deleteTemplateIfUnused(record.template.id)
+            Log.d("Notes", "template deleted: $templateDeleted, image deleted: $imageDeleted")
             null
+        } else {
+            records.size
         }
+
     }
 }

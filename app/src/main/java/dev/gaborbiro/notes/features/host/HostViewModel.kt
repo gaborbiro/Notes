@@ -2,7 +2,6 @@ package dev.gaborbiro.notes.features.host
 
 import android.graphics.Bitmap
 import android.net.Uri
-import android.util.Log
 import androidx.annotation.UiThread
 import androidx.annotation.WorkerThread
 import androidx.compose.runtime.getValue
@@ -72,16 +71,17 @@ class HostViewModel(
         }
     }
 
-    @UiThread
-    fun deleteRecord(recordId: Long) {
-        runSafely {
-            val (templateDeleted, imageDeleted) = repository.deleteRecordAndCleanupTemplate(recordId)
-            Log.d("Notes", "template deleted: $templateDeleted, image deleted: $imageDeleted")
-            _uiState.update {
-                it.copy(refreshWidget = true, closeScreen = true)
-            }
-        }
-    }
+//    @UiThread
+//    fun deleteRecord(recordId: Long) {
+//        runSafely {
+//            val record = repository.deleteRecord(recordId)
+//            val (templateDeleted, imageDeleted) = repository.deleteTemplateIfUnused(record.template.id)
+//            Log.d("Notes", "template deleted: $templateDeleted, image deleted: $imageDeleted")
+//            _uiState.update {
+//                it.copy(refreshWidget = true, closeScreen = true)
+//            }
+//        }
+//    }
 
     @UiThread
     fun startWithEdit(recordId: Long) {
@@ -173,11 +173,14 @@ class HostViewModel(
 
     @UiThread
     fun onRecordDetailsChanged(title: String, description: String) {
-        _uiState.update {
-            val dialogState: DialogState.InputDialogState? = it.requireDialog()
-            it.copy(
-                dialog = dialogState?.withValidationError(validationError = null),
-            )
+        val image: Uri? = (_uiState.value.dialog as? DialogState.InputDialogState.Edit)?.image
+        runSafely {
+            _uiState.update {
+                val dialogState: DialogState.InputDialogState? = it.requireDialog()
+                it.copy(
+                    dialog = dialogState?.withValidationError(validationError = null),
+                )
+            }
         }
     }
 

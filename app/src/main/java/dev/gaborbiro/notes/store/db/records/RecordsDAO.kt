@@ -1,6 +1,5 @@
 package dev.gaborbiro.notes.store.db.records
 
-import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -27,6 +26,10 @@ interface RecordsDAO {
     @Transaction
     @Query("SELECT * FROM records ORDER BY timestamp DESC")
     fun getLiveData(): Flow<List<RecordAndTemplateDBModel>>
+
+    @Transaction
+    @Query("SELECT * FROM templates LEFT JOIN records ON  templates._id = records.templateId WHERE name LIKE '%' || :search || '%' OR description LIKE '%' || :search || '%' ORDER BY timestamp DESC")
+    fun getLiveData(search: String): Flow<List<RecordAndTemplateDBModel>>
 
     @Transaction
     @Query("SELECT * FROM records WHERE _id=:id")

@@ -8,7 +8,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -20,17 +19,18 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.os.bundleOf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
-import dev.gaborbiro.notes.features.host.dialog.EditTarget
-import dev.gaborbiro.notes.features.host.dialog.EditTargetConfirmationDialogContent
-import dev.gaborbiro.notes.features.host.dialog.NoteInputDialogContent
+import dev.gaborbiro.notes.features.common.BaseErrorDialogActivity
+import dev.gaborbiro.notes.features.common.BaseViewModel
+import dev.gaborbiro.notes.features.host.views.EditTarget
+import dev.gaborbiro.notes.features.host.views.EditTargetConfirmationDialogContent
+import dev.gaborbiro.notes.features.host.views.NoteInputDialogContent
 import dev.gaborbiro.notes.features.widget.NotesWidgetsUpdater
 import dev.gaborbiro.notes.store.file.DocumentWriter
 import dev.gaborbiro.notes.ui.theme.NotesTheme
 import dev.gaborbiro.notes.util.BitmapLoader
-import dev.gaborbiro.notes.util.hideActionNotification
 
 
-class HostActivity : AppCompatActivity() {
+class HostActivity : BaseErrorDialogActivity() {
 
     companion object {
 
@@ -92,7 +92,7 @@ class HostActivity : AppCompatActivity() {
         private const val EXTRA_ACTION = "extra_action"
 
         private enum class Action {
-            CAMERA, PICK_IMAGE, TEXT_ONLY, DELETE, REDO_IMAGE, EDIT
+            CAMERA, PICK_IMAGE, TEXT_ONLY, REDO_IMAGE, EDIT
         }
 
         private const val EXTRA_TEMPLATE_ID = "template_id"
@@ -108,6 +108,10 @@ class HostActivity : AppCompatActivity() {
             CreateRecordUseCase(repository),
             EditRecordUseCase(repository),
         )
+    }
+
+    override fun baseViewModel(): BaseViewModel {
+        return viewModel
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -130,11 +134,11 @@ class HostActivity : AppCompatActivity() {
                 viewModel.redoImage(templateId)
             }
 
-            Action.DELETE -> {
-                val recordId = intent.getLongExtra(EXTRA_RECORD_ID, -1L)
-                viewModel.deleteRecord(recordId)
-                hideActionNotification()
-            }
+//            Action.DELETE -> {
+//                val recordId = intent.getLongExtra(EXTRA_RECORD_ID, -1L)
+//                viewModel.deleteRecord(recordId)
+//                hideActionNotification()
+//            }
 
             Action.EDIT -> {
                 val recordId = intent.getLongExtra(EXTRA_RECORD_ID, -1L)
@@ -147,6 +151,7 @@ class HostActivity : AppCompatActivity() {
         }
 
         setContent {
+            HandleErrors()
             val uiState: HostUIState by viewModel.uiState.collectAsStateWithLifecycle()
 
             if (uiState.showCamera) {
@@ -206,7 +211,7 @@ class HostActivity : AppCompatActivity() {
     @Composable
     private fun InputDialog(dialogState: DialogState.InputDialogState) {
         Dialog(onDismissRequest = { viewModel.onDialogDismissed() }) {
-            val image = (dialogState as? DialogState.InputDialogState.Edit)?.image
+//            val image = (dialogState as? DialogState.InputDialogState.Edit)?.image
             val title = (dialogState as? DialogState.InputDialogState.Edit)?.title
             val description = (dialogState as? DialogState.InputDialogState.Edit)?.description
             Surface(

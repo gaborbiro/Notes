@@ -4,7 +4,9 @@ import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -16,7 +18,7 @@ import dev.gaborbiro.notes.features.notes.NotesListScreen
 import dev.gaborbiro.notes.ui.theme.NotesTheme
 import dev.gaborbiro.notes.util.BitmapLoader
 
-class MainActivity : ComponentActivity() {
+class NavigationActivity : ComponentActivity() {
 
     private val repository by lazy { RecordsRepository.get() }
     private val uiMapper: RecordsUIMapper by lazy { RecordsUIMapper(BitmapLoader(this)) }
@@ -42,6 +44,7 @@ fun NotesNavHost(
     NavHost(
         navController = navController,
         startDestination = NoteList.route,
+        modifier = Modifier.fillMaxSize(),
     ) {
         composable(route = NoteList.route) {
             NotesListScreen(

@@ -39,21 +39,24 @@ interface RecordsRepository {
 
     suspend fun getRecords(templateId: Long): List<Record>
 
-    fun getRecordsFlow(): Flow<List<Record>>
+    fun getRecordsFlow(search: String? = null): Flow<List<Record>>
 
     suspend fun getRecord(recordId: Long): Record?
 
     suspend fun saveRecord(record: ToSaveRecord): Long
 
+    suspend fun saveRecord(record: Record)
+
     suspend fun duplicateRecord(recordId: Long): Long
 
     suspend fun applyTemplate(templateId: Long): Long
 
+    suspend fun deleteRecord(recordId: Long): Record
 
     /**
-     * @return whether the template and image have also been deleted
+     * @return whether the template and image have been deleted
      */
-    suspend fun deleteRecordAndCleanupTemplate(recordId: Long): Pair<Boolean, Boolean>
+    suspend fun deleteTemplateIfUnused(templateId: Long): Pair<Boolean, Boolean>
 
     /**
      * null means value is not changed

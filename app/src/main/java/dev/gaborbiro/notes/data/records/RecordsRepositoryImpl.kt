@@ -13,6 +13,7 @@ import dev.gaborbiro.notes.store.db.records.model.TemplateDBModel
 import dev.gaborbiro.notes.store.file.DocumentDeleter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import java.time.LocalDateTime
 
@@ -61,15 +62,32 @@ class RecordsRepositoryImpl(
         return mapper.map(recordsDAO.getByTemplate(templateId))
     }
 
-    override fun getRecordsFlow(): Flow<List<Record>> {
-        return recordsDAO.getLiveData()
-            .distinctUntilChanged()
-            .map(mapper::map)
+    override fun getRecordsFlow(search: String? /* = null */): Flow<List<Record>> {
+        try {
+            val raw = search
+                ?.let { recordsDAO.getLiveData(it) }
+                ?: recordsDAO.getLiveData()
+            return raw.distinctUntilChanged()
+                .map(mapper::map)
+        } catch (t: Throwable) {
+            return flowOf(emptyList())
+        }
     }
 
     override suspend fun saveRecord(record: ToSaveRecord): Long {
         val templateId = templatesDAO.insertOrUpdate(mapper.map(record.template))
         return recordsDAO.insert(mapper.map(record, templateId))
+    }
+
+    override suspend fun saveRecord(record: Record) {
+        recordsDAO.insert(
+            RecordDBModel(
+                timestamp = record.timestamp,
+                templateId = record.template.id,
+            ).apply {
+                id = record.id
+            }
+        )
     }
 
     override suspend fun duplicateRecord(recordId: Long): Long {
@@ -83,10 +101,10 @@ class RecordsRepositoryImpl(
         return recordsDAO.get(recordId)?.let(mapper::map)
     }
 
-    override suspend fun deleteRecordAndCleanupTemplate(recordId: Long): Pair<Boolean, Boolean> {
-        val templateId = recordsDAO.get(recordId)!!.template.id!!
+    override suspend fun deleteRecord(recordId: Long): Record {
+        val record = recordsDAO.get(recordId)!!
         recordsDAO.delete(recordId)
-        return deleteTemplateIfUnused(templateId)
+        return mapper.map(record)
     }
 
     override suspend fun applyTemplate(templateId: Long): Long {
@@ -126,7 +144,7 @@ class RecordsRepositoryImpl(
         }
     }
 
-    private suspend fun deleteTemplateIfUnused(templateId: Long): Pair<Boolean, Boolean> {
+    override suspend fun deleteTemplateIfUnused(templateId: Long): Pair<Boolean, Boolean> {
         return if (recordsDAO.getByTemplate(templateId).isEmpty()) { // template is unused
             val image = templatesDAO.get(templateId)!!.image
             val documentDeleted = templatesDAO.delete(templateId) > 0
