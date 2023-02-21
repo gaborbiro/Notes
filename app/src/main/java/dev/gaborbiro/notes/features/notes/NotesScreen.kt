@@ -3,7 +3,6 @@
 package dev.gaborbiro.notes.features.notes
 
 import android.content.Context
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -32,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,14 +47,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.features.common.RecordsUIMapper
-import dev.gaborbiro.notes.features.common.model.RecordUIModel
 import dev.gaborbiro.notes.features.notes.views.RecordView
 import dev.gaborbiro.notes.features.widget.NotesWidgetsUpdater
 import dev.gaborbiro.notes.ui.theme.PaddingDefault
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotesListScreen(
     context: Context,
@@ -62,18 +60,43 @@ fun NotesListScreen(
     uiMapper: RecordsUIMapper,
     navigator: NotesListNavigator,
 ) {
-    val coroutineScope = rememberCoroutineScope()
-    var searchTerm by remember { mutableStateOf(null as String?) }
-    val recordsFlow = repository.getRecordsFlow(searchTerm)
-    val records = recordsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
+    val viewModel = remember {
+        NotesViewModel(repository, uiMapper, navigator)
+    }
+    LaunchedEffect(key1 = Unit) {
+        viewModel.loadRecords(search = null)
+    }
     val snackbarHostState = remember { SnackbarHostState() }
+
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    if (uiState.refreshWidget) {
+        viewModel.onWidgetRefreshed()
+        NotesWidgetsUpdater.oneOffUpdate(context)
+    }
+
+    LaunchedEffect(key1 = uiState.showUndoDeleteSnackbar) {
+        if (uiState.showUndoDeleteSnackbar) {
+            viewModel.onUndoDeleteSnackbarShown()
+            val result = snackbarHostState.showSnackbar(
+                message = "Note deleted",
+                actionLabel = "Undo",
+                withDismissAction = true,
+                duration = SnackbarDuration.Short,
+            )
+            when (result) {
+                SnackbarResult.ActionPerformed -> viewModel.onUndoDeleteRequested()
+                SnackbarResult.Dismissed -> viewModel.onUndoDeleteDismissed()
+            }
+        }
+    }
 
     Scaffold(
         modifier = Modifier
             .fillMaxSize(),
         floatingActionButton = {
             SearchFAB {
-                searchTerm = it
+                viewModel.loadRecords(search = it)
             }
         },
         floatingActionButtonPosition = FabPosition.End,
@@ -88,54 +111,8 @@ fun NotesListScreen(
                 .background(MaterialTheme.colorScheme.secondaryContainer)
                 .fillMaxSize()
                 .padding(it),
-            records.value.map { uiMapper.map(it) },
-            onDuplicateRecord = { record ->
-                coroutineScope.launch {
-                    repository.duplicateRecord(record.recordId)
-                    NotesWidgetsUpdater.oneOffUpdate(context)
-                }
-            },
-            onUpdateImage = { record ->
-                navigator.updateRecordPhoto(record.templateId)
-            },
-            onDeleteImage = { record ->
-                coroutineScope.launch {
-                    repository.deleteImage(record.templateId)
-                    NotesWidgetsUpdater.oneOffUpdate(context)
-                }
-            },
-            onEditRecord = { record ->
-                navigator.editRecord(recordId = record.recordId)
-            },
-            onDeleteRecord = { record: RecordUIModel ->
-                coroutineScope.launch {
-                    val oldRecord = repository.deleteRecord(recordId = record.recordId)
-
-                    NotesWidgetsUpdater.oneOffUpdate(context)
-                    val result = snackbarHostState.showSnackbar(
-                        message = "Note deleted",
-                        actionLabel = "Undo",
-                        withDismissAction = true,
-                        duration = SnackbarDuration.Short,
-                    )
-                    when (result) {
-                        SnackbarResult.ActionPerformed -> {
-                            repository.saveRecord(oldRecord)
-                        }
-
-                        SnackbarResult.Dismissed -> {
-                            val (templateDeleted, imageDeleted) = repository.deleteTemplateIfUnused(
-                                oldRecord.template.id
-                            )
-                            Log.d(
-                                "Notes",
-                                "template deleted: $templateDeleted, image deleted: $imageDeleted"
-                            )
-                        }
-                    }
-                    NotesWidgetsUpdater.oneOffUpdate(context)
-                }
-            })
+            viewModel,
+        )
     }
 }
 
@@ -201,15 +178,12 @@ private fun SearchFAB(onSearch: (String?) -> Unit) {
 @Composable
 private fun NotesList(
     modifier: Modifier,
-    records: List<RecordUIModel>,
-    onDuplicateRecord: (RecordUIModel) -> Unit,
-    onUpdateImage: (RecordUIModel) -> Unit,
-    onDeleteImage: (RecordUIModel) -> Unit,
-    onEditRecord: (RecordUIModel) -> Unit,
-    onDeleteRecord: (RecordUIModel) -> Unit,
+    viewModel: NotesViewModel,
 ) {
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val records = uiState.records
 
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(PaddingDefault),
@@ -218,21 +192,20 @@ private fun NotesList(
         modifier = modifier
     ) {
         items(records.size, key = { records[it].recordId }) {
-            val record = records[it]
             RecordView(
                 modifier = Modifier.animateItemPlacement(),
-                record = record,
-                onDuplicateRecord = {
-                    onDuplicateRecord(record)
+                record = records[it],
+                onDuplicateRecord = { record ->
+                    viewModel.onDuplicateRecordRequested(record)
                     coroutineScope.launch {
                         delay(200L)
                         listState.scrollToItem(0)
                     }
                 },
-                onUpdateImage = { onUpdateImage(record) },
-                onDeleteImage = { onDeleteImage(record) },
-                onEditRecord = { onEditRecord(record) },
-                onDeleteRecord = { onDeleteRecord(record) }
+                onUpdateImage = viewModel::onUpdateImageRequested,
+                onDeleteImage = viewModel::onDeleteImageRequested,
+                onEditRecord = viewModel::onEditRecordRequested,
+                onDeleteRecord = viewModel::onDeleteRecordRequested
             )
         }
     }

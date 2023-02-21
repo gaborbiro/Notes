@@ -50,11 +50,11 @@ import dev.gaborbiro.notes.ui.theme.PaddingQuarter
 fun RecordView(
     modifier: Modifier = Modifier,
     record: RecordUIModel,
-    onDuplicateRecord: () -> Unit,
-    onUpdateImage: () -> Unit,
-    onDeleteImage: () -> Unit,
-    onEditRecord: () -> Unit,
-    onDeleteRecord: () -> Unit,
+    onDuplicateRecord: (RecordUIModel) -> Unit,
+    onUpdateImage: (RecordUIModel) -> Unit,
+    onDeleteImage: (RecordUIModel) -> Unit,
+    onEditRecord: (RecordUIModel) -> Unit,
+    onDeleteRecord: (RecordUIModel) -> Unit,
 ) {
     Row(
         modifier = modifier
@@ -71,7 +71,13 @@ fun RecordView(
                 .weight(1f),
             record = record
         )
-        PopupMenu(onDuplicateRecord, onUpdateImage, onDeleteImage, onEditRecord, onDeleteRecord)
+        PopupMenu(
+            onDuplicateRecord = { onDuplicateRecord(record) },
+            onUpdateImage = { onUpdateImage(record) },
+            onDeleteImage = { onDeleteImage(record) },
+            onEditRecord = { onEditRecord(record) },
+            onDeleteRecord = { onDeleteRecord(record) },
+        )
     }
 }
 

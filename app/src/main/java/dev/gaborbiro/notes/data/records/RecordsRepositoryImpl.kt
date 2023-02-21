@@ -67,14 +67,17 @@ class RecordsRepositoryImpl(
     }
 
     override fun getRecordsFlow(search: String? /* = null */): Flow<List<Record>> {
-        try {
-            val raw = search
-                ?.let { recordsDAO.getLiveData(it) }
-                ?: recordsDAO.getLiveData()
-            return raw.distinctUntilChanged()
+        return try {
+            val raw = if (search.isNullOrEmpty()) {
+                recordsDAO.getLiveData()
+            } else {
+                recordsDAO.getLiveData(search)
+            }
+            raw
+                .distinctUntilChanged()
                 .map(mapper::map)
         } catch (t: Throwable) {
-            return flowOf(emptyList())
+            flowOf(emptyList())
         }
     }
 
