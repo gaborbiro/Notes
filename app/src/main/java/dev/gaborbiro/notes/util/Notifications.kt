@@ -10,21 +10,26 @@ import androidx.core.app.NotificationCompat
 import dev.gaborbiro.notes.R
 
 private const val CHANNEL_ID_ACTIONS = "actions"
+private const val CHANNEL_ID_GENERAL = "general"
 private const val NOTIFICATION_ID_ACTIONS = 1001
+private const val NOTIFICATION_ID_GENERAL = 1002
 
 fun Context.createNotificationChannels() {
-    val importance = NotificationManager.IMPORTANCE_DEFAULT
     val undoChannel = NotificationChannel(
         CHANNEL_ID_ACTIONS,
         "Actions",
-        importance
+        NotificationManager.IMPORTANCE_DEFAULT
+    )
+    val generalChannel = NotificationChannel(
+        CHANNEL_ID_GENERAL,
+        "General",
+        NotificationManager.IMPORTANCE_LOW
     )
 
-    val notificationManager: NotificationManager =
-        getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     notificationManager.createNotificationChannels(
         listOf(
-            undoChannel,
+            undoChannel, generalChannel
         )
     )
 }
@@ -49,9 +54,19 @@ fun Context.showActionNotification(
         NOTIFICATION_ID_ACTIONS,
         builder.build()
     )
+}
+
+fun Context.showSimpleNotification(id: Long, title: String) {
+    val builder = NotificationCompat.Builder(this, CHANNEL_ID_GENERAL)
+        .setSmallIcon(R.drawable.ic_launcher_foreground)
+        .setContentTitle(title)
+    getSystemService(NotificationManager::class.java).notify(
+        id.toInt(),
+        builder.build()
+    )
 
 }
 
-fun Context.hideActionNotification() {
-    getSystemService(NotificationManager::class.java).cancel(NOTIFICATION_ID_ACTIONS)
-}
+//fun Context.hideActionNotification() {
+//    getSystemService(NotificationManager::class.java).cancel(NOTIFICATION_ID_ACTIONS)
+//}

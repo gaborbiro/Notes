@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -27,8 +26,7 @@ import dev.gaborbiro.notes.ui.theme.PaddingDefault
 import kotlinx.coroutines.launch
 
 @Composable
-fun ScrollToTopView() {
-    val listState = rememberLazyListState()
+fun ScrollToTopView(listState: LazyListState) {
     val coroutineScope = rememberCoroutineScope()
     val showButton = remember {
         derivedStateOf {

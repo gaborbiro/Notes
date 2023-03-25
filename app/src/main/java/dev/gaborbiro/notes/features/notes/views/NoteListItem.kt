@@ -3,6 +3,7 @@ package dev.gaborbiro.notes.features.notes.views
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,7 +48,7 @@ import dev.gaborbiro.notes.ui.theme.PaddingQuarter
 
 
 @Composable
-fun RecordView(
+fun NoteListItem(
     modifier: Modifier = Modifier,
     record: RecordUIModel,
     onDuplicateRecord: (RecordUIModel) -> Unit,
@@ -55,6 +56,7 @@ fun RecordView(
     onDeleteImage: (RecordUIModel) -> Unit,
     onEditRecord: (RecordUIModel) -> Unit,
     onDeleteRecord: (RecordUIModel) -> Unit,
+    onImageTapped: (RecordUIModel) -> Unit,
 ) {
     Row(
         modifier = modifier
@@ -62,7 +64,9 @@ fun RecordView(
             .wrapContentHeight(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        RecordImage(record.bitmap, Modifier.size(64.dp))
+        RecordImage(record.bitmap, Modifier.size(64.dp)) {
+            onImageTapped(record)
+        }
         Spacer(modifier = Modifier.size(PaddingDefault))
         TitleAndSubtitle(
             modifier = Modifier
@@ -82,7 +86,7 @@ fun RecordView(
 }
 
 @Composable
-private fun RecordImage(bitmap: Bitmap?, modifier: Modifier) {
+private fun RecordImage(bitmap: Bitmap?, modifier: Modifier, onTap: () -> Unit) {
     bitmap?.let {
         Image(
             painter = BitmapPainter(bitmap.asImageBitmap()),
@@ -90,6 +94,7 @@ private fun RecordImage(bitmap: Bitmap?, modifier: Modifier) {
             contentDescription = "note image",
             modifier = modifier
                 .clip(RoundedCornerShape(10.dp))
+                .clickable(onClick = onTap)
         )
     } ?: run {
         Spacer(modifier)
@@ -133,13 +138,13 @@ private fun PopupMenu(
         options = listOf(
             PopUpMenuItem(
                 icon = Icons.Outlined.FileCopy,
-                label = "Copy record",
+                label = "Repeat note",
                 onMenuItemSelected = onDuplicateRecord,
                 hasBottomDivider = true,
             ),
             PopUpMenuItem(
                 icon = Icons.Outlined.Image,
-                label = "Update image",
+                label = "Change image",
                 onMenuItemSelected = onUpdateImage,
             ),
             PopUpMenuItem(

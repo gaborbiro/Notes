@@ -14,6 +14,11 @@ class EditRecordUseCase(
     @UiThread
     suspend fun execute(recordId: Long, title: String, description: String) {
         val record = repository.getRecord(recordId)!!
+        repository.deleteRecord(recordId)
+        // note: image shouldn't be deleted
+        val (templateDeleted, imageDeleted) =
+            repository.deleteTemplateIfUnused(record.template.id)
+        Log.d("Notes", "template deleted: $templateDeleted, image deleted: $imageDeleted")
         val newRecord = ToSaveRecord(
             timestamp = record.timestamp,
             template = ToSaveTemplate(
@@ -23,9 +28,5 @@ class EditRecordUseCase(
             ),
         )
         repository.saveRecord(newRecord)
-        repository.deleteRecord(recordId)
-        val (templateDeleted, imageDeleted) =
-            repository.deleteTemplateIfUnused(record.template.id)
-        Log.d("Notes", "template deleted: $templateDeleted, image deleted: $imageDeleted")
     }
 }

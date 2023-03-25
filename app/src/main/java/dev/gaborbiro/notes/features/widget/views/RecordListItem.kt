@@ -2,7 +2,6 @@ package dev.gaborbiro.notes.features.widget.views
 
 import android.graphics.Bitmap
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.unit.dp
 import androidx.glance.GlanceModifier
 import androidx.glance.Image
 import androidx.glance.ImageProvider
@@ -23,15 +22,15 @@ import dev.gaborbiro.notes.ui.theme.PaddingDefaultWidget
 import dev.gaborbiro.notes.ui.theme.PaddingHalfWidget
 
 @Composable
-fun WidgetRecordListItem(
+fun RecordListItem(
     record: RecordUIModel,
-    onWidgetTapAction: Action,
+    tapActionProvider: Action,
 ) {
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
             .padding(vertical = PaddingHalfWidget)
-            .clickable(onWidgetTapAction)
+            .clickable(tapActionProvider)
     ) {
         record.bitmap
             ?.let { image: Bitmap ->
@@ -39,12 +38,12 @@ fun WidgetRecordListItem(
                     provider = ImageProvider(image),
                     contentDescription = "note image",
                     modifier = GlanceModifier
-                        .size(60.dp),
+                        .size(WidgetImageSize),
                     contentScale = ContentScale.Crop,
                 )
             }
             ?: run {
-                Spacer(modifier = GlanceModifier.size(60.dp))
+                Spacer(modifier = GlanceModifier.size(WidgetImageSize))
             }
         Column(
             modifier = GlanceModifier

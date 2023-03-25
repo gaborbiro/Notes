@@ -14,7 +14,7 @@ class NotesWidgetConfigurationActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         // Necessary to force update the shared widget preferences, otherwise
         // the new widget will use outdated preferences.
-        NotesWidgetsUpdater.oneOffUpdate(this)
+        NotesWidget.reload(this)
 
         lifecycle.coroutineScope.launch {
             val appWidgetId = intent?.extras?.getInt(

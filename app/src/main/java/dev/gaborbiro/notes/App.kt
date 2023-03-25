@@ -15,6 +15,6 @@ class App : Application() {
         super.onCreate()
         appContext = this
         AppDatabase.init(this)
-//        createNotificationChannels()
+        createNotificationChannels()
     }
 }

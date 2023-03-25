@@ -23,13 +23,13 @@ import dev.gaborbiro.notes.ui.theme.PaddingHalfWidget
 @Composable
 fun WidgetTemplateListItem(
     template: TemplateUIModel,
-    onWidgetTapAction: Action,
+    tapActionProvider: Action,
 ) {
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
             .padding(vertical = PaddingHalfWidget)
-            .clickable(onWidgetTapAction)
+            .clickable(tapActionProvider)
     ) {
         template.bitmap
             ?.let { image: Bitmap ->

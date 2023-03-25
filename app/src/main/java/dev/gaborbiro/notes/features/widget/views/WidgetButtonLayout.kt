@@ -12,12 +12,14 @@ import androidx.glance.layout.Alignment
 import androidx.glance.layout.Row
 import androidx.glance.layout.padding
 import dev.gaborbiro.notes.R
-import dev.gaborbiro.notes.features.widget.NotesWidgetNavigator
 
 @Composable
 fun WidgetButtonLayout(
     modifier: GlanceModifier,
-    navigator: NotesWidgetNavigator,
+    launchNoteViaCameraAction: () -> Action,
+    launchNewNoteViaImagePickerActionProvider: () -> Action,
+    launchNewNoteViaTextOnlyActionProvider: () -> Action,
+    reloadActionProvider: () -> Action,
 ) {
     Row(
         modifier = modifier,
@@ -29,7 +31,7 @@ fun WidgetButtonLayout(
                 .padding(vertical = 10.dp),
             iconResId = R.drawable.ic_add_photo,
             contentDescription = "New note via camera",
-            tapAction = navigator.getLaunchNewNoteViaCameraAction(),
+            tapAction = launchNoteViaCameraAction(),
         )
         WidgetButton(
             modifier = GlanceModifier
@@ -37,7 +39,7 @@ fun WidgetButtonLayout(
                 .padding(vertical = 10.dp),
             iconResId = R.drawable.ic_add_picture,
             contentDescription = "New note via existing image",
-            tapAction = navigator.getLaunchNewNoteViaImagePickerAction(),
+            tapAction = launchNewNoteViaImagePickerActionProvider(),
         )
         WidgetButton(
             modifier = GlanceModifier
@@ -45,7 +47,15 @@ fun WidgetButtonLayout(
                 .padding(vertical = 10.dp),
             iconResId = R.drawable.ic_add,
             contentDescription = "New note",
-            tapAction = navigator.getLaunchNewNoteViaTextOnlyAction(),
+            tapAction = launchNewNoteViaTextOnlyActionProvider(),
+        )
+        WidgetButton(
+            modifier = GlanceModifier
+                .defaultWeight()
+                .padding(vertical = 10.dp),
+            iconResId = R.drawable.ic_refresh,
+            contentDescription = "Reload",
+            tapAction = reloadActionProvider(),
         )
     }
 }

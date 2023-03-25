@@ -22,30 +22,9 @@ class RecordsRepositoryImpl(
     private val recordsDAO: RecordsDAO,
     private val mapper: DBMapper,
     private val documentDeleter: DocumentDeleter,
-//    private val bitmapLoader: BitmapLoader,
-//    private val documentWriter: DocumentWriter,
 ) : RecordsRepository {
 
     override suspend fun getRecords(since: LocalDateTime? /* = null */): List<Record> {
-//        templatesDAO.get().forEach { template ->
-//            if (template.image?.toString()?.contains("cache") == true) {
-//                val bitmap = bitmapLoader.loadBitmap(template.image)!!
-//                val uri = ByteArrayOutputStream().let { stream ->
-//                    bitmap.compress(Bitmap.CompressFormat.PNG, 0, stream)
-//                    val inStream = ByteArrayInputStream(stream.toByteArray())
-//                    documentWriter.write(inStream, template.image.lastPathSegment!!)
-//                }
-//                val id = templatesDAO.insertOrUpdate(
-//                    TemplateDBModel(
-//                        id = template.id!!,
-//                        image = uri,
-//                        name = template.name,
-//                        description = template.description
-//                    )
-//                )
-//                println(id)
-//            }
-//        }
         val records = recordsDAO.get()
         val filteredRecords = since
             ?.let {

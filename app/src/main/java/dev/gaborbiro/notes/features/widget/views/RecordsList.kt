@@ -1,28 +1,20 @@
 package dev.gaborbiro.notes.features.widget.views
 
 import androidx.compose.runtime.Composable
-import androidx.datastore.preferences.core.Preferences
 import androidx.glance.GlanceModifier
+import androidx.glance.action.Action
 import androidx.glance.appwidget.lazy.LazyColumn
-import androidx.glance.currentState
-import dev.gaborbiro.notes.features.common.RecordsUIMapper
-import dev.gaborbiro.notes.features.common.TemplatesUIMapper
-import dev.gaborbiro.notes.features.widget.NotesWidgetNavigator
-import dev.gaborbiro.notes.features.widget.retrieveRecentRecords
-import dev.gaborbiro.notes.features.widget.retrieveTopTemplates
-import dev.gaborbiro.notes.store.bitmap.BitmapStore
+import dev.gaborbiro.notes.features.common.model.RecordUIModel
+import dev.gaborbiro.notes.features.common.model.TemplateUIModel
 
 @Composable
 fun RecordsList(
     modifier: GlanceModifier,
-    navigator: NotesWidgetNavigator,
-    bitmapStore: BitmapStore,
+    recentRecords: List<RecordUIModel>,
+    topTemplates: List<TemplateUIModel>,
+    recordTapActionProvider: (recordId: Long) -> Action,
+    templateTapActionProvider: (templateId: Long) -> Action,
 ) {
-    val recordsUIMapper = RecordsUIMapper(bitmapStore)
-    val templatesUIMapper = TemplatesUIMapper(bitmapStore)
-    val prefs = currentState<Preferences>()
-    val recentRecords = recordsUIMapper.map(prefs.retrieveRecentRecords())
-    val topTemplates = templatesUIMapper.map(prefs.retrieveTopTemplates())
     LazyColumn(
         modifier,
     ) {
@@ -49,9 +41,9 @@ fun RecordsList(
             when {
                 it < recentRecords.size -> {
                     val record = recentRecords[index]
-                    WidgetRecordListItem(
+                    RecordListItem(
                         record = record,
-                        onWidgetTapAction = navigator.getDuplicateRecordAction(recordId = record.recordId),
+                        tapActionProvider = recordTapActionProvider(record.recordId),
                     )
                 }
 
@@ -63,7 +55,7 @@ fun RecordsList(
                     val template = topTemplates[index]
                     WidgetTemplateListItem(
                         template = template,
-                        onWidgetTapAction = navigator.getApplyTemplateAction(templateId = template.templateId)
+                        tapActionProvider = templateTapActionProvider(template.templateId),
                     )
                 }
             }

@@ -1,11 +1,14 @@
 package dev.gaborbiro.notes.features.widget.views
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.text.FontWeight
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
+
+val WidgetImageSize = 60.dp
 
 val sectionTitleTextStyle = TextStyle(
     fontWeight = FontWeight.Normal,

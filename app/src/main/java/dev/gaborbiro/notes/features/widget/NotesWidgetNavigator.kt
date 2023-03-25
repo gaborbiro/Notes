@@ -9,6 +9,7 @@ import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.features.host.HostActivity
+import dev.gaborbiro.notes.util.showSimpleNotification
 
 interface NotesWidgetNavigator {
 
@@ -21,6 +22,8 @@ interface NotesWidgetNavigator {
     fun getDuplicateRecordAction(recordId: Long): Action
 
     fun getApplyTemplateAction(templateId: Long): Action
+
+    fun getReloadAction(): Action
 }
 
 class NotesWidgetNavigatorImpl : NotesWidgetNavigator {
@@ -51,6 +54,10 @@ class NotesWidgetNavigatorImpl : NotesWidgetNavigator {
                 ActionParameters.Key<Long>(PREFS_KEY_TEMPLATE) to templateId
             )
         )
+    }
+
+    override fun getReloadAction(): Action {
+        return actionRunCallback<RefreshAction>()
     }
 }
 
@@ -93,14 +100,14 @@ class DuplicateNoteAction : ActionCallback {
         parameters: ActionParameters
     ) {
         val recordId = parameters[ActionParameters.Key<Long>(PREFS_KEY_RECORD)]!!
-        val newRecordId = RecordsRepository.get().duplicateRecord(recordId)
-        NotesWidgetsUpdater.oneOffUpdate(context)
-//        context.showActionNotification(
-//            title = "Undo - duplicate record",
-//            action = "Undo",
-//            actionIcon = R.drawable.ic_undo,
-//            actionIntent = HostActivity.getDeleteRecordIntent(context, newRecordId)
-//        )
+        val repo = RecordsRepository.get()
+        val oldRecord = repo.getRecord(recordId)
+        val newRecordId = repo.duplicateRecord(recordId)
+        val newRecord = repo.getRecord(newRecordId)
+        context.showSimpleNotification(recordId, newRecord
+            ?.let { "Created note with '${newRecord.template.name}'" }
+            ?: run { "Could not create note with '${oldRecord?.template?.name ?: "?"}'" }
+        )
     }
 }
 
@@ -113,7 +120,17 @@ class ApplyTemplateAction : ActionCallback {
     ) {
         val templateId = parameters[ActionParameters.Key<Long>(PREFS_KEY_TEMPLATE)]!!
         RecordsRepository.get().applyTemplate(templateId)
-        NotesWidgetsUpdater.oneOffUpdate(context)
+    }
+}
+
+class RefreshAction : ActionCallback {
+
+    override suspend fun onAction(
+        context: Context,
+        glanceId: GlanceId,
+        parameters: ActionParameters
+    ) {
+        NotesWidget.reload(context)
     }
 }
 

@@ -42,7 +42,7 @@ class NotesViewModel(
     }
 
     fun onUpdateImageRequested(record: RecordUIModel) {
-        navigator.updateRecordPhoto(record.templateId)
+        navigator.updateRecordPhoto(record.recordId)
     }
 
     fun onDeleteImageRequested(record: RecordUIModel) {
@@ -67,6 +67,10 @@ class NotesViewModel(
             }
             refreshWidget()
         }
+    }
+
+    fun onImageTapped(record: RecordUIModel) {
+        navigator.viewImage(record.recordId)
     }
 
     fun onUndoDeleteRequested() {

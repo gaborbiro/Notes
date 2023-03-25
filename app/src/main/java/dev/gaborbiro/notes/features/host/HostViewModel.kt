@@ -8,11 +8,16 @@ import dev.gaborbiro.notes.features.common.BaseViewModel
 import dev.gaborbiro.notes.features.host.usecase.CacheImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.CreateRecordUseCase
 import dev.gaborbiro.notes.features.host.usecase.CreateValidationResult
+import dev.gaborbiro.notes.features.host.usecase.EditImageValidationResult
+import dev.gaborbiro.notes.features.host.usecase.EditRecordImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.EditRecordUseCase
+import dev.gaborbiro.notes.features.host.usecase.EditTemplateImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.EditTemplateUseCase
 import dev.gaborbiro.notes.features.host.usecase.EditValidationResult
+import dev.gaborbiro.notes.features.host.usecase.GetRecordImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.PersistNewPhotoUseCase
 import dev.gaborbiro.notes.features.host.usecase.ValidateCreateRecordUseCase
+import dev.gaborbiro.notes.features.host.usecase.ValidateEditImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.ValidateEditRecordUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +33,10 @@ class HostViewModel(
     private val validateCreateRecordUseCase: ValidateCreateRecordUseCase,
     private val persistNewPhotoUseCase: PersistNewPhotoUseCase,
     private val cacheImageUseCase: CacheImageUseCase,
+    private val validateEditImageUseCase: ValidateEditImageUseCase,
+    private val editRecordImageUseCase: EditRecordImageUseCase,
+    private val editTemplateImageUseCase: EditTemplateImageUseCase,
+    private val getRecordImageUseCase: GetRecordImageUseCase,
 ) : BaseViewModel() {
 
     companion object {
@@ -52,7 +61,7 @@ class HostViewModel(
     fun onStartWithImagePicker() {
         _uiState.update {
             it.copy(
-                showImagePicker = true,
+                imagePicker = ImagePickerState.Create,
             )
         }
     }
@@ -67,12 +76,22 @@ class HostViewModel(
     }
 
     @UiThread
-    fun onStartWithRedoImage(templateId: Long) {
+    fun onStartWithRedoImage(recordId: Long) {
         _uiState.update {
             it.copy(
-                showImagePicker = true,
-                templateIdForImageRedo = templateId,
+                imagePicker = ImagePickerState.EditImage(recordId),
             )
+        }
+    }
+
+    fun onStartWithShowImage(recordId: Long) {
+        runSafely {
+            val image = getRecordImageUseCase.execute(recordId)!!
+            _uiState.update {
+                it.copy(
+                    dialog = DialogState.ShowImageDialog(image)
+                )
+            }
         }
     }
 
@@ -122,15 +141,38 @@ class HostViewModel(
     fun onImagePicked(currentScreenRotation: Int, uri: Uri?) {
         runSafely {
             val persistedUri = cacheImageUseCase.execute(currentScreenRotation, uri)
-            _uiState.value.templateIdForImageRedo?.let {
-                refreshWidgetAndClose()
-                repository.updateTemplate(it, persistedUri)
-            } ?: run {
-                _uiState.update {
-                    it.copy(
-                        showImagePicker = false,
-                        dialog = DialogState.InputDialogState.CreateWithImage(image = persistedUri),
-                    )
+            val imagePicker = _uiState.value.imagePicker!!
+            when (imagePicker) {
+                ImagePickerState.Create -> {
+                    _uiState.update {
+                        it.copy(
+                            imagePicker = null,
+                            dialog = DialogState.InputDialogState.CreateWithImage(image = persistedUri),
+                        )
+                    }
+                }
+
+                is ImagePickerState.EditImage -> {
+                    val result = validateEditImageUseCase.execute(imagePicker.recordId)
+                    when (result) {
+                        is EditImageValidationResult.ConfirmMultipleEdit -> {
+                            _uiState.update {
+                                it.copy(
+                                    imagePicker = null,
+                                    dialog = DialogState.EditImageTargetConfirmationDialog(
+                                        recordId = imagePicker.recordId,
+                                        count = result.count,
+                                        image = persistedUri,
+                                    ),
+                                )
+                            }
+                        }
+
+                        EditImageValidationResult.Valid -> {
+                            refreshWidgetAndClose()
+                            editRecordImageUseCase.execute(imagePicker.recordId, persistedUri)
+                        }
+                    }
                 }
             }
         }
@@ -240,6 +282,24 @@ class HostViewModel(
     }
 
     @UiThread
+    fun onEditImageTargetConfirmed(target: EditTarget) {
+        refreshWidgetAndClose()
+        val dialogState: DialogState.EditImageTargetConfirmationDialog =
+            _uiState.value.requireDialog()
+        runSafely {
+            when (target) {
+                EditTarget.RECORD -> {
+                    editRecordImageUseCase.execute(dialogState.recordId, dialogState.image)
+                }
+
+                EditTarget.TEMPLATE -> {
+                    editTemplateImageUseCase.execute(dialogState.recordId, dialogState.image)
+                }
+            }
+        }
+    }
+
+    @UiThread
     fun onEditTargetConfirmed(target: EditTarget) {
         refreshWidgetAndClose()
         val dialogState: DialogState.EditTargetConfirmationDialog = _uiState.value.requireDialog()
@@ -274,9 +334,7 @@ class HostViewModel(
             it.copy(
                 refreshWidget = true,
                 closeScreen = true,
-                showImagePicker = false,
-                showCamera = false,
-                dialog = null,
+                imagePicker = null,
             )
         }
     }

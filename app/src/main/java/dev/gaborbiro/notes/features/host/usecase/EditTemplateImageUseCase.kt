@@ -1,18 +1,15 @@
 package dev.gaborbiro.notes.features.host.usecase
 
+import android.net.Uri
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.features.common.BaseUseCase
 
-class EditTemplateUseCase(
+class EditTemplateImageUseCase(
     private val repository: RecordsRepository
 ) : BaseUseCase() {
 
-    suspend fun execute(recordId: Long, title: String, description: String) {
+    suspend fun execute(recordId: Long, uri: Uri?) {
         val templateId = repository.getRecord(recordId)!!.template.id
-        repository.updateTemplate(
-            templateId = templateId,
-            title = title,
-            description = description
-        )
+        repository.updateTemplate(templateId, uri)
     }
 }

@@ -2,12 +2,16 @@ package dev.gaborbiro.notes.features.host
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.os.Bundle
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -16,6 +20,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.os.bundleOf
@@ -25,15 +30,19 @@ import dev.gaborbiro.notes.features.common.BaseErrorDialogActivity
 import dev.gaborbiro.notes.features.common.BaseViewModel
 import dev.gaborbiro.notes.features.host.usecase.CacheImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.CreateRecordUseCase
+import dev.gaborbiro.notes.features.host.usecase.EditRecordImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.EditRecordUseCase
+import dev.gaborbiro.notes.features.host.usecase.EditTemplateImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.EditTemplateUseCase
+import dev.gaborbiro.notes.features.host.usecase.GetRecordImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.PersistNewPhotoUseCase
 import dev.gaborbiro.notes.features.host.usecase.ValidateCreateRecordUseCase
+import dev.gaborbiro.notes.features.host.usecase.ValidateEditImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.ValidateEditRecordUseCase
 import dev.gaborbiro.notes.features.host.views.EditTarget
 import dev.gaborbiro.notes.features.host.views.EditTargetConfirmationDialogContent
 import dev.gaborbiro.notes.features.host.views.NoteInputDialogContent
-import dev.gaborbiro.notes.features.widget.NotesWidgetsUpdater
+import dev.gaborbiro.notes.features.widget.NotesWidget
 import dev.gaborbiro.notes.store.bitmap.BitmapStore
 import dev.gaborbiro.notes.ui.theme.NotesTheme
 
@@ -61,15 +70,24 @@ class HostActivity : BaseErrorDialogActivity() {
         private fun getImagePickerIntent(context: Context) =
             getActionIntent(context, Action.PICK_IMAGE)
 
+        fun launchShowImage(context: Context, recordId: Long) = launchActivity(
+            appContext = context,
+            intent = getShowImageIntent(context),
+            EXTRA_RECORD_ID to recordId,
+        )
+
+        private fun getShowImageIntent(context: Context) =
+            getActionIntent(context, Action.SHOW_IMAGE)
+
         fun launchAddNote(context: Context) = launchActivity(context, getTextOnlyIntent(context))
 
         private fun getTextOnlyIntent(context: Context) = getActionIntent(context, Action.TEXT_ONLY)
 
-        fun launchRedoImage(context: Context, templateId: Long) {
+        fun launchRedoImage(context: Context, recordId: Long) {
             launchActivity(
                 appContext = context,
                 intent = getActionIntent(context, Action.REDO_IMAGE),
-                EXTRA_TEMPLATE_ID to templateId
+                EXTRA_RECORD_ID to recordId
             )
         }
 
@@ -100,10 +118,9 @@ class HostActivity : BaseErrorDialogActivity() {
         private const val EXTRA_ACTION = "extra_action"
 
         private enum class Action {
-            CAMERA, PICK_IMAGE, TEXT_ONLY, REDO_IMAGE, EDIT
+            CAMERA, PICK_IMAGE, TEXT_ONLY, REDO_IMAGE, EDIT, SHOW_IMAGE
         }
 
-        private const val EXTRA_TEMPLATE_ID = "template_id"
         private const val EXTRA_RECORD_ID = "record_id"
     }
 
@@ -118,7 +135,11 @@ class HostActivity : BaseErrorDialogActivity() {
             ValidateEditRecordUseCase(repository),
             ValidateCreateRecordUseCase(),
             PersistNewPhotoUseCase(bitmapStore),
-            CacheImageUseCase(bitmapStore)
+            CacheImageUseCase(bitmapStore),
+            ValidateEditImageUseCase(repository),
+            EditRecordImageUseCase(repository),
+            EditTemplateImageUseCase(repository),
+            GetRecordImageUseCase(repository, bitmapStore),
         )
     }
 
@@ -142,8 +163,8 @@ class HostActivity : BaseErrorDialogActivity() {
             Action.TEXT_ONLY -> viewModel.onStartWithJustText()
 
             Action.REDO_IMAGE -> {
-                val templateId = intent.getLongExtra(EXTRA_TEMPLATE_ID, -1L)
-                viewModel.onStartWithRedoImage(templateId)
+                val recordId = intent.getLongExtra(EXTRA_RECORD_ID, -1L)
+                viewModel.onStartWithRedoImage(recordId)
             }
 
 //            Action.DELETE -> {
@@ -155,6 +176,11 @@ class HostActivity : BaseErrorDialogActivity() {
             Action.EDIT -> {
                 val recordId = intent.getLongExtra(EXTRA_RECORD_ID, -1L)
                 viewModel.onStartWithEdit(recordId)
+            }
+
+            Action.SHOW_IMAGE -> {
+                val recordId = intent.getLongExtra(EXTRA_RECORD_ID, -1L)
+                viewModel.onStartWithShowImage(recordId)
             }
 
             null -> {
@@ -178,20 +204,26 @@ class HostActivity : BaseErrorDialogActivity() {
                 }
             }
 
-            if (uiState.showImagePicker) {
-                val launcher = rememberLauncherForActivityResult(
-                    contract = ActivityResultContracts.PickVisualMedia(),
-                    onResult = {
-                        viewModel.onImagePicked(display!!.rotation, it)
+            when (uiState.imagePicker) {
+                is ImagePickerState.Create, is ImagePickerState.EditImage -> {
+                    val launcher = rememberLauncherForActivityResult(
+                        contract = ActivityResultContracts.PickVisualMedia(),
+                        onResult = {
+                            viewModel.onImagePicked(display!!.rotation, it)
+                        }
+                    )
+                    SideEffect {
+                        launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                     }
-                )
-                SideEffect {
-                    launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                }
+
+                null -> {
+                    // nothing to do
                 }
             }
 
             if (uiState.refreshWidget) {
-                NotesWidgetsUpdater.oneOffUpdate(this@HostActivity)
+                NotesWidget.reload(this@HostActivity)
             }
 
             NotesTheme {
@@ -209,6 +241,12 @@ class HostActivity : BaseErrorDialogActivity() {
         when (dialogState) {
             is DialogState.InputDialogState -> InputDialog(dialogState)
             is DialogState.EditTargetConfirmationDialog -> EditTargetConfirmationDialog(dialogState)
+            is DialogState.EditImageTargetConfirmationDialog -> EditImageTargetConfirmationDialog(
+                dialogState
+            )
+
+            is DialogState.ShowImageDialog -> ImageDialog(image = dialogState.bitmap)
+
             null -> {
                 // no dialog is shown
             }
@@ -249,6 +287,23 @@ class HostActivity : BaseErrorDialogActivity() {
 
     @Composable
     private fun EditTargetConfirmationDialog(dialogState: DialogState.EditTargetConfirmationDialog) {
+        TargetConfirmationDialog(
+            count = dialogState.count,
+            onConfirmed = { viewModel.onEditTargetConfirmed(it) })
+    }
+
+    @Composable
+    private fun EditImageTargetConfirmationDialog(dialogState: DialogState.EditImageTargetConfirmationDialog) {
+        TargetConfirmationDialog(
+            count = dialogState.count,
+            onConfirmed = { viewModel.onEditImageTargetConfirmed(it) })
+    }
+
+    @Composable
+    private fun TargetConfirmationDialog(
+        count: Int,
+        onConfirmed: (HostViewModel.Companion.EditTarget) -> Unit
+    ) {
         Dialog(onDismissRequest = { viewModel.onDialogDismissed() }) {
             Surface(
                 shape = RoundedCornerShape(16.dp),
@@ -256,15 +311,36 @@ class HostActivity : BaseErrorDialogActivity() {
                 shadowElevation = 4.dp,
             ) {
                 EditTargetConfirmationDialogContent(
-                    count = dialogState.count,
+                    count = count,
                     onSubmit = { target ->
                         val vmTarget = when (target) {
                             EditTarget.RECORD -> HostViewModel.Companion.EditTarget.RECORD
                             EditTarget.TEMPLATE -> HostViewModel.Companion.EditTarget.TEMPLATE
                         }
-                        viewModel.onEditTargetConfirmed(vmTarget)
+                        onConfirmed(vmTarget)
                     },
                     onCancel = { viewModel.onDialogDismissed() },
+                )
+            }
+        }
+    }
+
+    @Composable
+    private fun ImageDialog(image: Bitmap) {
+        Dialog(onDismissRequest = { viewModel.onDialogDismissed() }) {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.primaryContainer,
+                shadowElevation = 4.dp,
+                modifier = Modifier.wrapContentSize()
+            ) {
+                Image(
+                    bitmap = image.asImageBitmap(),
+                    contentDescription = "",
+                    modifier = Modifier.size(
+                        width = image.width.dp * 2,
+                        height = image.height.dp * 2
+                    )
                 )
             }
         }

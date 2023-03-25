@@ -11,14 +11,16 @@ import androidx.glance.layout.Column
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.wrapContentHeight
 import androidx.glance.unit.ColorProvider
+import dev.gaborbiro.notes.features.common.model.RecordUIModel
+import dev.gaborbiro.notes.features.common.model.TemplateUIModel
 import dev.gaborbiro.notes.features.widget.NotesWidgetNavigator
-import dev.gaborbiro.notes.store.bitmap.BitmapStore
 
 @Composable
 fun NotesWidgetContent(
     modifier: GlanceModifier,
     navigator: NotesWidgetNavigator,
-    bitmapStore: BitmapStore,
+    recentRecords: List<RecordUIModel>,
+    topTemplates: List<TemplateUIModel>,
 ) {
     Column(
         modifier = modifier
@@ -32,15 +34,20 @@ fun NotesWidgetContent(
             modifier = GlanceModifier
                 .fillMaxWidth()
                 .defaultWeight(),
-            navigator = navigator,
-            bitmapStore = bitmapStore,
+            recentRecords = recentRecords,
+            topTemplates = topTemplates,
+            recordTapActionProvider = { recordId -> navigator.getDuplicateRecordAction(recordId) },
+            templateTapActionProvider = { templateId -> navigator.getApplyTemplateAction(templateId) },
         )
         WidgetButtonLayout(
             modifier = GlanceModifier
                 .fillMaxWidth()
                 .defaultWeight()
                 .wrapContentHeight(),
-            navigator = navigator,
+            launchNoteViaCameraAction = { navigator.getLaunchNewNoteViaCameraAction() },
+            launchNewNoteViaImagePickerActionProvider = { navigator.getLaunchNewNoteViaImagePickerAction() },
+            launchNewNoteViaTextOnlyActionProvider = { navigator.getLaunchNewNoteViaTextOnlyAction() },
+            reloadActionProvider = { navigator.getReloadAction() },
         )
     }
 }

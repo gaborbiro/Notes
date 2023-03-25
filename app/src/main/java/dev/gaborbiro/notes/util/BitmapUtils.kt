@@ -1,8 +1,12 @@
 package dev.gaborbiro.notes.util
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Matrix
+import android.util.DisplayMetrics
 import android.view.Surface
+import androidx.compose.ui.unit.Dp
+import dev.gaborbiro.notes.App
 
 
 fun correctBitmap(
@@ -25,7 +29,7 @@ fun correctBitmap(
     return modifyImage(
         bitmap,
         rotateAngle,
-        if (correctWidth) 360 else 0
+        if (correctWidth) 640 else 0
     )
 }
 
@@ -49,4 +53,13 @@ fun modifyImage(source: Bitmap, rotateAngle: Float, maxWidthPx: Int): Bitmap {
         matrix,
         true
     )
+}
+
+fun Dp.px(): Float {
+    return App.appContext.dpToPixel(this.value)
+}
+
+fun Context.dpToPixel(dp: Float): Float {
+    val metrics: DisplayMetrics = this.resources.displayMetrics
+    return dp * (metrics.densityDpi / 160f)
 }

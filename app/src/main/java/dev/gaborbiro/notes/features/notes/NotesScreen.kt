@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -47,8 +48,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.features.common.RecordsUIMapper
-import dev.gaborbiro.notes.features.notes.views.RecordView
-import dev.gaborbiro.notes.features.widget.NotesWidgetsUpdater
+import dev.gaborbiro.notes.features.notes.views.NoteListItem
+import dev.gaborbiro.notes.features.widget.NotesWidget
 import dev.gaborbiro.notes.ui.theme.PaddingDefault
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -72,12 +73,11 @@ fun NotesListScreen(
 
     if (uiState.refreshWidget) {
         viewModel.onWidgetRefreshed()
-        NotesWidgetsUpdater.oneOffUpdate(context)
+        NotesWidget.reload(context)
     }
 
     LaunchedEffect(key1 = uiState.showUndoDeleteSnackbar) {
         if (uiState.showUndoDeleteSnackbar) {
-            viewModel.onUndoDeleteSnackbarShown()
             val result = snackbarHostState.showSnackbar(
                 message = "Note deleted",
                 actionLabel = "Undo",
@@ -88,6 +88,7 @@ fun NotesListScreen(
                 SnackbarResult.ActionPerformed -> viewModel.onUndoDeleteRequested()
                 SnackbarResult.Dismissed -> viewModel.onUndoDeleteDismissed()
             }
+            viewModel.onUndoDeleteSnackbarShown()
         }
     }
 
@@ -180,7 +181,7 @@ private fun NotesList(
     modifier: Modifier,
     viewModel: NotesViewModel,
 ) {
-    val listState = rememberLazyListState()
+    val listState: LazyListState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val records = uiState.records
@@ -192,7 +193,7 @@ private fun NotesList(
         modifier = modifier
     ) {
         items(records.size, key = { records[it].recordId }) {
-            RecordView(
+            NoteListItem(
                 modifier = Modifier.animateItemPlacement(),
                 record = records[it],
                 onDuplicateRecord = { record ->
@@ -205,9 +206,10 @@ private fun NotesList(
                 onUpdateImage = viewModel::onUpdateImageRequested,
                 onDeleteImage = viewModel::onDeleteImageRequested,
                 onEditRecord = viewModel::onEditRecordRequested,
-                onDeleteRecord = viewModel::onDeleteRecordRequested
+                onDeleteRecord = viewModel::onDeleteRecordRequested,
+                onImageTapped = viewModel::onImageTapped,
             )
         }
     }
-    ScrollToTopView()
+    ScrollToTopView(listState)
 }
