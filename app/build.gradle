@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace 'dev.gaborbiro.notes'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "dev.gaborbiro.notes"
         minSdk 31
-        targetSdk 33
+        targetSdk 34
         versionCode 1
         versionName "1.0"
 
@@ -39,7 +39,7 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = '17'
+        jvmTarget = "17"
     }
     buildFeatures {
         compose true
@@ -78,7 +78,7 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-runtime-compose:$lifecycle_version"
     implementation "androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycle_version"
 
-    implementation 'androidx.glance:glance-appwidget:1.0.0-SNAPSHOT'
+    implementation 'androidx.glance:glance-appwidget:1.1.1'
 
     // Navigation
     def nav_version = "2.5.3"

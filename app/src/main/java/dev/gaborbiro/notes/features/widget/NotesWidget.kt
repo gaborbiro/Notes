@@ -1,7 +1,6 @@
 package dev.gaborbiro.notes.features.widget
 
 import android.content.Context
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -11,6 +10,7 @@ import androidx.glance.LocalContext
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
+import androidx.glance.appwidget.provideContent
 import androidx.glance.currentState
 import androidx.glance.layout.fillMaxSize
 import androidx.work.WorkManager
@@ -55,28 +55,29 @@ class NotesWidget : GlanceAppWidget() {
 
     override val stateDefinition = NotesWidgetPreferences
 
-    @Composable
-    override fun Content() {
-        val prefs = currentState<Preferences>()
-        val bitmapStore = BitmapStore(LocalContext.current)
-        val recordsUIMapper = RecordsUIMapper(bitmapStore)
-        val recentRecords = recordsUIMapper.map(
-            records = prefs.retrieveRecentRecords(),
-            maxImageSizePx = 60.dp.px().toInt()
-        )
-        val templatesUIMapper = TemplatesUIMapper(bitmapStore)
-        val topTemplates = templatesUIMapper.map(
-            records = prefs.retrieveTopTemplates(),
-            maxImageSizePx = WidgetImageSize.px().toInt()
-        )
+    override suspend fun provideGlance(context: Context, id: GlanceId) {
+        provideContent {
+            val prefs = currentState<Preferences>()
+            val bitmapStore = BitmapStore(LocalContext.current)
+            val recordsUIMapper = RecordsUIMapper(bitmapStore)
+            val recentRecords = recordsUIMapper.map(
+                records = prefs.retrieveRecentRecords(),
+                maxImageSizePx = 60.dp.px().toInt()
+            )
+            val templatesUIMapper = TemplatesUIMapper(bitmapStore)
+            val topTemplates = templatesUIMapper.map(
+                records = prefs.retrieveTopTemplates(),
+                maxImageSizePx = WidgetImageSize.px().toInt()
+            )
 
-        NotesWidgetContent(
-            modifier = GlanceModifier
-                .fillMaxSize(),
-            navigator = NotesWidgetNavigatorImpl(),
-            recentRecords,
-            topTemplates,
-        )
+            NotesWidgetContent(
+                modifier = GlanceModifier
+                    .fillMaxSize(),
+                navigator = NotesWidgetNavigatorImpl(),
+                recentRecords,
+                topTemplates,
+            )
+        }
     }
 
     override suspend fun onDelete(context: Context, glanceId: GlanceId) {
