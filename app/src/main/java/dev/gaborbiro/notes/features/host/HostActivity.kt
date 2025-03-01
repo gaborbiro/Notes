@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.core.content.FileProvider
 import androidx.core.os.bundleOf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
@@ -35,7 +36,6 @@ import dev.gaborbiro.notes.features.host.usecase.EditRecordUseCase
 import dev.gaborbiro.notes.features.host.usecase.EditTemplateImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.EditTemplateUseCase
 import dev.gaborbiro.notes.features.host.usecase.GetRecordImageUseCase
-import dev.gaborbiro.notes.features.host.usecase.PersistNewPhotoUseCase
 import dev.gaborbiro.notes.features.host.usecase.ValidateCreateRecordUseCase
 import dev.gaborbiro.notes.features.host.usecase.ValidateEditImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.ValidateEditRecordUseCase
@@ -45,6 +45,8 @@ import dev.gaborbiro.notes.features.host.views.NoteInputDialogContent
 import dev.gaborbiro.notes.features.widget.NotesWidget
 import dev.gaborbiro.notes.store.bitmap.BitmapStore
 import dev.gaborbiro.notes.ui.theme.NotesTheme
+import java.io.File
+import java.time.LocalDateTime
 
 
 class HostActivity : BaseErrorDialogActivity() {
@@ -102,7 +104,7 @@ class HostActivity : BaseErrorDialogActivity() {
         private fun launchActivity(
             appContext: Context,
             intent: Intent,
-            vararg extras: Pair<String, Any>
+            vararg extras: Pair<String, Any>,
         ) {
             appContext.startActivity(intent.apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -134,7 +136,6 @@ class HostActivity : BaseErrorDialogActivity() {
             EditTemplateUseCase(repository),
             ValidateEditRecordUseCase(repository),
             ValidateCreateRecordUseCase(),
-            PersistNewPhotoUseCase(bitmapStore),
             CacheImageUseCase(bitmapStore),
             ValidateEditImageUseCase(repository),
             EditRecordImageUseCase(repository),
@@ -193,14 +194,21 @@ class HostActivity : BaseErrorDialogActivity() {
             val uiState: HostUIState by viewModel.uiState.collectAsStateWithLifecycle()
 
             if (uiState.showCamera) {
+                val file = File(filesDir, "public/${LocalDateTime.now()}.png")
+                val uri = FileProvider.getUriForFile(
+                    /* context = */ this,
+                    /* authority = */ applicationContext.packageName + ".provider",
+                    /* file = */ file,
+                )
+
                 val launcher = rememberLauncherForActivityResult(
-                    contract = ActivityResultContracts.TakePicturePreview(),
+                    contract = ActivityResultContracts.TakePicture(),
                     onResult = {
-                        viewModel.onPhotoTaken(display!!.rotation, it)
+                        viewModel.onPhotoTaken(uri)
                     }
                 )
                 SideEffect {
-                    launcher.launch(null)
+                    launcher.launch(uri)
                 }
             }
 
@@ -209,7 +217,7 @@ class HostActivity : BaseErrorDialogActivity() {
                     val launcher = rememberLauncherForActivityResult(
                         contract = ActivityResultContracts.PickVisualMedia(),
                         onResult = {
-                            viewModel.onImagePicked(display!!.rotation, it)
+                            viewModel.onImagePicked(it)
                         }
                     )
                     SideEffect {
@@ -302,7 +310,7 @@ class HostActivity : BaseErrorDialogActivity() {
     @Composable
     private fun TargetConfirmationDialog(
         count: Int,
-        onConfirmed: (HostViewModel.Companion.EditTarget) -> Unit
+        onConfirmed: (HostViewModel.Companion.EditTarget) -> Unit,
     ) {
         Dialog(onDismissRequest = { viewModel.onDialogDismissed() }) {
             Surface(

@@ -9,6 +9,7 @@ import dev.gaborbiro.notes.store.file.DocumentWriter
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.FileNotFoundException
+import java.time.LocalDateTime
 
 class BitmapStore(
     private val context: Context,
@@ -91,9 +92,13 @@ class BitmapStore(
 
     suspend fun writeBitmap(bitmap: Bitmap): Uri {
         return ByteArrayOutputStream().let { stream ->
-            bitmap.compress(Bitmap.CompressFormat.PNG, 0, stream)
+            bitmap.compress(
+                /* format = */ Bitmap.CompressFormat.PNG,
+                /* quality = */ 0,  // quality is ignored with PNG
+                /* stream = */ stream
+            )
             val inStream = ByteArrayInputStream(stream.toByteArray())
-            documentWriter.write(inStream, "${System.currentTimeMillis()}.png")
+            documentWriter.write(inStream, "${LocalDateTime.now()}.png")
         }
     }
 }
