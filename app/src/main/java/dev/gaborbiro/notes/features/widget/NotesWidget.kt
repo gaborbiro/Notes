@@ -1,6 +1,10 @@
 package dev.gaborbiro.notes.features.widget
 
 import android.content.Context
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -70,12 +74,18 @@ class NotesWidget : GlanceAppWidget() {
                 maxImageSizePx = WidgetImageSize.px().toInt()
             )
 
+            var showTopTemplates by remember { mutableStateOf(false) }
+
             NotesWidgetContent(
                 modifier = GlanceModifier
                     .fillMaxSize(),
                 navigator = NotesWidgetNavigatorImpl(),
-                recentRecords,
-                topTemplates,
+                showTopTemplates = showTopTemplates,
+                onTemplatesButtonTapped = {
+                    showTopTemplates = showTopTemplates.not()
+                },
+                recentRecords = recentRecords,
+                topTemplates = topTemplates,
             )
         }
     }

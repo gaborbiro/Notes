@@ -18,6 +18,8 @@ import dev.gaborbiro.notes.features.widget.NotesWidgetNavigator
 @Composable
 fun NotesWidgetContent(
     modifier: GlanceModifier,
+    showTopTemplates: Boolean,
+    onTemplatesButtonTapped: () -> Unit,
     navigator: NotesWidgetNavigator,
     recentRecords: List<RecordUIModel>,
     topTemplates: List<TemplateUIModel>,
@@ -36,8 +38,10 @@ fun NotesWidgetContent(
                 .defaultWeight(),
             recentRecords = recentRecords,
             topTemplates = topTemplates,
+            showTopTemplates = showTopTemplates,
             recordTapActionProvider = { recordId -> navigator.getDuplicateRecordAction(recordId) },
             templateTapActionProvider = { templateId -> navigator.getApplyTemplateAction(templateId) },
+            onTemplatesButtonTapped = onTemplatesButtonTapped,
         )
         WidgetButtonLayout(
             modifier = GlanceModifier

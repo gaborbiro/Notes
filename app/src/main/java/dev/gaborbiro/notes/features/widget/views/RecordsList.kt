@@ -12,8 +12,10 @@ fun RecordsList(
     modifier: GlanceModifier,
     recentRecords: List<RecordUIModel>,
     topTemplates: List<TemplateUIModel>,
+    showTopTemplates: Boolean,
     recordTapActionProvider: (recordId: Long) -> Action,
     templateTapActionProvider: (templateId: Long) -> Action,
+    onTemplatesButtonTapped: () -> Unit,
 ) {
     LazyColumn(
         modifier,
@@ -48,15 +50,17 @@ fun RecordsList(
                 }
 
                 it == recentRecords.size -> {
-                    SectionTitle()
+                    SectionTitle(onClick = onTemplatesButtonTapped)
                 }
 
                 else -> {
-                    val template = topTemplates[index]
-                    WidgetTemplateListItem(
-                        template = template,
-                        tapActionProvider = templateTapActionProvider(template.templateId),
-                    )
+                    if (showTopTemplates) {
+                        val template = topTemplates[index]
+                        WidgetTemplateListItem(
+                            template = template,
+                            tapActionProvider = templateTapActionProvider(template.templateId),
+                        )
+                    }
                 }
             }
         }
