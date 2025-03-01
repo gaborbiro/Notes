@@ -23,7 +23,7 @@ class ReloadWorkRequest(
 ) : CoroutineWorker(appContext, workerParameters) {
 
     companion object {
-        private const val RECORD_DAYS_TO_DISPLAY_DEFAULT = 3
+        private const val RECORD_DAYS_TO_DISPLAY_DEFAULT = 7
         private const val TEMPLATE_COUNT_DEFAULT = 30
 
         private const val PREFS_RECENT_RECORDS_KEY = "recent_records_key"

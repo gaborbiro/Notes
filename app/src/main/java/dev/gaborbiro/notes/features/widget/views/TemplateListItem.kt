@@ -28,7 +28,7 @@ fun WidgetTemplateListItem(
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
-            .padding(vertical = PaddingHalfWidget)
+            .padding(vertical = PaddingDefaultWidget, horizontal = PaddingDefaultWidget)
             .clickable(tapActionProvider)
     ) {
         template.bitmap
@@ -49,7 +49,7 @@ fun WidgetTemplateListItem(
             modifier = GlanceModifier
                 .defaultWeight()
                 .fillMaxHeight()
-                .padding(horizontal = PaddingDefaultWidget),
+                .padding(start = PaddingDefaultWidget),
             maxLines = 2,
             style = titleTextStyle
         )

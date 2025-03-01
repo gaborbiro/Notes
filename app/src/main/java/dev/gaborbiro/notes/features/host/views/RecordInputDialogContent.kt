@@ -10,18 +10,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,7 +28,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -41,7 +36,6 @@ import dev.gaborbiro.notes.ui.theme.PaddingDefault
 import dev.gaborbiro.notes.ui.theme.PaddingDouble
 import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteInputDialogContent(
     onCancel: () -> Unit,
@@ -77,18 +71,8 @@ fun NoteInputDialogContent(
         ) {
             Text(
                 text = "Add a note",
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.titleMedium,
-            )
-            Icon(
-                imageVector = Icons.Filled.Cancel,
-                tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                contentDescription = "cancel",
-                modifier = Modifier
-                    .size(30.dp)
-                    .clickable {
-                        onCancel()
-                    },
             )
         }
 
@@ -100,15 +84,11 @@ fun NoteInputDialogContent(
                 .wrapContentHeight()
                 .focusRequester(focusRequester),
             isError = error.isNullOrBlank().not(),
-            colors = TextFieldDefaults.textFieldColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-            ),
             textStyle = MaterialTheme.typography.bodyMedium,
             maxLines = 1,
             placeholder = {
                 Text(
                     text = "Title",
-                    color = Color.Gray,
                     style = MaterialTheme.typography.bodyMedium,
                 )
             },
@@ -141,14 +121,10 @@ fun NoteInputDialogContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(96.dp),
-            colors = TextFieldDefaults.textFieldColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-            ),
             textStyle = MaterialTheme.typography.bodyMedium,
             placeholder = {
                 Text(
                     text = "Description",
-                    color = Color.Gray,
                     style = MaterialTheme.typography.bodyMedium,
                 )
             },
@@ -165,19 +141,29 @@ fun NoteInputDialogContent(
 
         Spacer(modifier = Modifier.height(PaddingDouble))
 
-        Button(
-            onClick = onDone,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-            ),
-            shape = RoundedCornerShape(50.dp),
+        Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
-                .padding(horizontal = 40.dp)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.End,
         ) {
-            Text(text = "Save")
+            TextButton(onCancel) {
+                Text(
+                    modifier = Modifier
+                        .padding(horizontal = PaddingDefault),
+                    color = MaterialTheme.colorScheme.primary,
+                    text = "Cancel",
+                    style = MaterialTheme.typography.labelLarge,
+                )
+            }
+            TextButton(onDone) {
+                Text(
+                    modifier = Modifier
+                        .padding(horizontal = PaddingDefault),
+                    color = MaterialTheme.colorScheme.primary,
+                    text = "Save",
+                    style = MaterialTheme.typography.labelLarge,
+                )
+            }
         }
 
         LaunchedEffect(key1 = Unit) {

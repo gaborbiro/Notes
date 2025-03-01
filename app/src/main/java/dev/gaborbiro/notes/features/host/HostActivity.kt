@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -235,7 +236,7 @@ class HostActivity : BaseErrorDialogActivity() {
             }
 
             NotesTheme {
-                Dialog(viewModel.uiState.collectAsStateWithLifecycle().value.dialog)
+                NotesDialog(viewModel.uiState.collectAsStateWithLifecycle().value.dialog)
             }
 
             if (uiState.closeScreen) {
@@ -245,7 +246,7 @@ class HostActivity : BaseErrorDialogActivity() {
     }
 
     @Composable
-    fun Dialog(dialogState: DialogState?) {
+    fun NotesDialog(dialogState: DialogState?) {
         when (dialogState) {
             is DialogState.InputDialogState -> InputDialog(dialogState)
             is DialogState.EditTargetConfirmationDialog -> EditTargetConfirmationDialog(dialogState)
@@ -261,7 +262,6 @@ class HostActivity : BaseErrorDialogActivity() {
         }
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun InputDialog(dialogState: DialogState.InputDialogState) {
         Dialog(
@@ -272,7 +272,7 @@ class HostActivity : BaseErrorDialogActivity() {
             val description = (dialogState as? DialogState.InputDialogState.Edit)?.description
             Surface(
                 shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.primaryContainer,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
                 shadowElevation = 4.dp,
                 modifier = Modifier
                     .wrapContentHeight()
@@ -315,7 +315,7 @@ class HostActivity : BaseErrorDialogActivity() {
         Dialog(onDismissRequest = { viewModel.onDialogDismissed() }) {
             Surface(
                 shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.primaryContainer,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
                 shadowElevation = 4.dp,
             ) {
                 EditTargetConfirmationDialogContent(
@@ -338,7 +338,7 @@ class HostActivity : BaseErrorDialogActivity() {
         Dialog(onDismissRequest = { viewModel.onDialogDismissed() }) {
             Surface(
                 shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.primaryContainer,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
                 shadowElevation = 4.dp,
                 modifier = Modifier.wrapContentSize()
             ) {

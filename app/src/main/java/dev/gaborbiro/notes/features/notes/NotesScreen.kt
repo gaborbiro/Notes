@@ -2,10 +2,8 @@
 
 package dev.gaborbiro.notes.features.notes
 
-import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -44,6 +42,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
@@ -56,7 +55,6 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun NotesListScreen(
-    context: Context,
     repository: RecordsRepository,
     uiMapper: RecordsUIMapper,
     navigator: NotesListNavigator,
@@ -70,6 +68,7 @@ fun NotesListScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     if (uiState.refreshWidget) {
         viewModel.onWidgetRefreshed()
@@ -106,10 +105,10 @@ fun NotesListScreen(
                 hostState = snackbarHostState,
             )
         },
+        containerColor = MaterialTheme.colorScheme.background,
     ) {
         NotesList(
             modifier = Modifier
-                .background(MaterialTheme.colorScheme.secondaryContainer)
                 .fillMaxSize()
                 .padding(it),
             viewModel,
@@ -145,8 +144,8 @@ private fun SearchFAB(onSearch: (String?) -> Unit) {
                         .onGloballyPositioned {
                             focusRequester.requestFocus() // IMPORTANT
                         },
-                    colors = TextFieldDefaults.textFieldColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    colors = TextFieldDefaults.colors().copy(
+                        unfocusedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
                     ),

@@ -3,7 +3,9 @@ package dev.gaborbiro.notes.features.widget.views
 import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
+import androidx.glance.ColorFilter
 import androidx.glance.GlanceModifier
+import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.action.Action
@@ -70,6 +72,7 @@ private fun WidgetButton(
     Image(
         provider = ImageProvider(resId = iconResId),
         contentDescription = contentDescription,
+        colorFilter = ColorFilter.tint(GlanceTheme.colors.onBackground),
         modifier = modifier.clickable(tapAction)
     )
 }

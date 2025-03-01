@@ -10,6 +10,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.GlanceTheme
 import androidx.glance.LocalContext
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
@@ -27,6 +28,8 @@ import dev.gaborbiro.notes.features.widget.views.NotesWidgetContent
 import dev.gaborbiro.notes.features.widget.views.WidgetImageSize
 import dev.gaborbiro.notes.features.widget.workers.ReloadWorkRequest
 import dev.gaborbiro.notes.store.bitmap.BitmapStore
+import dev.gaborbiro.notes.ui.theme.NotesGlanceColorScheme
+import dev.gaborbiro.notes.ui.theme.NotesTheme
 import dev.gaborbiro.notes.util.gson
 import dev.gaborbiro.notes.util.px
 
@@ -41,7 +44,7 @@ class NotesWidget : GlanceAppWidget() {
                 ReloadWorkRequest.getWorkRequest(
                     recentRecordsPrefsKey = PREFS_RECENT_RECORDS,
                     topTemplatesPrefsKey = PREFS_TOP_TEMPLATES,
-                    recordDaysToDisplay = 7,
+                    recordDaysToDisplay = 30,
                     templateCount = 30,
                 )
             )
@@ -76,17 +79,19 @@ class NotesWidget : GlanceAppWidget() {
 
             var showTopTemplates by remember { mutableStateOf(false) }
 
-            NotesWidgetContent(
-                modifier = GlanceModifier
-                    .fillMaxSize(),
-                navigator = NotesWidgetNavigatorImpl(),
-                showTopTemplates = showTopTemplates,
-                onTemplatesButtonTapped = {
-                    showTopTemplates = showTopTemplates.not()
-                },
-                recentRecords = recentRecords,
-                topTemplates = topTemplates,
-            )
+            GlanceTheme(colors = NotesGlanceColorScheme.colors) {
+                NotesWidgetContent(
+                    modifier = GlanceModifier
+                        .fillMaxSize(),
+                    navigator = NotesWidgetNavigatorImpl(),
+                    showTopTemplates = showTopTemplates,
+                    onTemplatesExpandButtonTapped = {
+                        showTopTemplates = showTopTemplates.not()
+                    },
+                    recentRecords = recentRecords,
+                    topTemplates = topTemplates,
+                )
+            }
         }
     }
 

@@ -19,7 +19,6 @@ import androidx.glance.layout.size
 import androidx.glance.text.Text
 import dev.gaborbiro.notes.features.common.model.RecordUIModel
 import dev.gaborbiro.notes.ui.theme.PaddingDefaultWidget
-import dev.gaborbiro.notes.ui.theme.PaddingHalfWidget
 
 @Composable
 fun RecordListItem(
@@ -29,7 +28,7 @@ fun RecordListItem(
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
-            .padding(vertical = PaddingHalfWidget)
+            .padding(vertical = PaddingDefaultWidget, horizontal = PaddingDefaultWidget)
             .clickable(tapActionProvider)
     ) {
         record.bitmap
@@ -49,20 +48,23 @@ fun RecordListItem(
             modifier = GlanceModifier
                 .defaultWeight()
                 .fillMaxHeight()
-                .padding(horizontal = PaddingDefaultWidget),
-            verticalAlignment = Alignment.Vertical.CenterVertically,
+                .padding(start = PaddingDefaultWidget),
+            verticalAlignment = Alignment.Vertical.Top,
         ) {
             Text(
                 text = record.title,
-                modifier = GlanceModifier,
                 maxLines = 2,
-                style = titleTextStyle
+                style = titleTextStyle,
+            )
+            Spacer(
+                modifier = GlanceModifier
+                    .defaultWeight()
             )
             Text(
+                modifier = GlanceModifier
+                    .fillMaxWidth(),
                 text = record.timestamp,
                 style = dateTextStyle,
-                modifier = GlanceModifier
-                    .fillMaxWidth()
             )
         }
     }

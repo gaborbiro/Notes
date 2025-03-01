@@ -1,12 +1,12 @@
 package dev.gaborbiro.notes.features.nav
 
-import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -30,7 +30,7 @@ class NavigationActivity : ComponentActivity() {
         setContent {
             NotesTheme {
                 val navController = rememberNavController()
-                NotesNavHost(this, navController, repository, uiMapper)
+                NotesNavHost(navController, repository, uiMapper)
             }
         }
     }
@@ -38,11 +38,11 @@ class NavigationActivity : ComponentActivity() {
 
 @Composable
 fun NotesNavHost(
-    context: Context,
     navController: NavHostController,
     repository: RecordsRepository,
     uiMapper: RecordsUIMapper,
 ) {
+    val context = LocalContext.current
     NavHost(
         navController = navController,
         startDestination = NoteList.route,
@@ -50,26 +50,10 @@ fun NotesNavHost(
     ) {
         composable(route = NoteList.route) {
             NotesListScreen(
-                context = context,
                 repository = repository,
                 uiMapper = uiMapper,
                 navigator = NotesListNavigatorImpl(context),
             )
         }
-//        intent(context, AddNoteViaCamera)
-//        intent(context, AddNoteViaImage)
-//        intent(context, AddNoteViaText)
     }
 }
-
-//private fun NavGraphBuilder.intent(
-//    context: Context,
-//    destination: NotesIntentDestination
-//) {
-//    addDestination(
-//        ActivityNavigator(context)
-//            .createDestination()
-//            .setIntent(destination.intent(context))
-//            .also { it.route = destination.route }
-//    )
-//}

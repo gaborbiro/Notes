@@ -114,11 +114,9 @@ private fun TitleAndSubtitle(modifier: Modifier, record: RecordUIModel) {
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
         )
         Text(
             text = record.timestamp,
-            color = Color.Gray,
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier
                 .padding(top = PaddingQuarter)

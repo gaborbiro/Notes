@@ -12,21 +12,22 @@ import androidx.glance.layout.padding
 import androidx.glance.layout.wrapContentHeight
 import androidx.glance.text.Text
 import dev.gaborbiro.notes.ui.theme.PaddingDefaultWidget
+import dev.gaborbiro.notes.ui.theme.PaddingDoubleWidget
 
 @Composable
-fun SectionTitle(onClick: () -> Unit) {
+fun SectionTitle(open: Boolean, onClick: () -> Unit) {
     Box(
         modifier = GlanceModifier
-            .padding(PaddingDefaultWidget)
+            .padding(horizontal = PaddingDefaultWidget)
             .clickable(onClick),
     ) {
         Text(
-            text = "Top Templates ",
+            text = "Top Templates ${if (open) "▼" else "▶"}",
             modifier = GlanceModifier
                 .background(sectionTitleBackground)
                 .wrapContentHeight()
                 .fillMaxWidth()
-                .padding(4.dp)
+                .padding(PaddingDoubleWidget)
                 .cornerRadius(4.dp),
             style = sectionTitleTextStyle,
         )
