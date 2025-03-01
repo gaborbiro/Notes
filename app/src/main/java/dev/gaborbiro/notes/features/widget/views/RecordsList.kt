@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.glance.GlanceModifier
 import androidx.glance.action.Action
 import androidx.glance.appwidget.lazy.LazyColumn
+import dev.gaborbiro.notes.R
 import dev.gaborbiro.notes.features.common.model.RecordUIModel
 import dev.gaborbiro.notes.features.common.model.TemplateUIModel
 
@@ -17,7 +18,9 @@ fun RecordsList(
     templateTapActionProvider: (templateId: Long) -> Action,
     onTemplatesExpandButtonTapped: () -> Unit,
 ) {
-    LazyColumn(modifier) {
+    LazyColumn(
+        modifier = modifier,
+    ) {
         items(
             count = recentRecords.size + topTemplates.size + 1,
             itemId = {
@@ -48,7 +51,11 @@ fun RecordsList(
                 }
 
                 it == recentRecords.size -> {
-                    SectionTitle(open = showTemplates, onClick = onTemplatesExpandButtonTapped)
+                    SectionTitle(
+                        title = "Top Templates",
+                        trailingImage = if (showTemplates) R.drawable.collapse_all else R.drawable.expand_all,
+                        onClick = onTemplatesExpandButtonTapped
+                    )
                 }
 
                 else -> {
