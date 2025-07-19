@@ -7,8 +7,12 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -92,8 +96,7 @@ fun NotesListScreen(
     }
 
     Scaffold(
-        modifier = Modifier
-            .fillMaxSize(),
+        contentWindowInsets = WindowInsets.systemBars.union(WindowInsets.ime),
         floatingActionButton = {
             SearchFAB {
                 viewModel.loadRecords(search = it)
@@ -106,11 +109,10 @@ fun NotesListScreen(
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
-    ) {
+    ) { paddingValues ->
         NotesList(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(it),
+                .padding(paddingValues),
             viewModel,
         )
     }
@@ -186,14 +188,15 @@ private fun NotesList(
     val records = uiState.records
 
     LazyColumn(
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(PaddingDefault),
-        contentPadding = PaddingValues(top = PaddingDefault, bottom = 64.dp),
+        contentPadding = PaddingValues(top = PaddingDefault, bottom = 86.dp),
         state = listState,
-        modifier = modifier
     ) {
         items(records.size, key = { records[it].recordId }) {
             NoteListItem(
-                modifier = Modifier.animateItemPlacement(),
+                modifier = Modifier
+                    .animateItem(),
                 record = records[it],
                 onDuplicateRecord = { record ->
                     viewModel.onDuplicateRecordRequested(record)

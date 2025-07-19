@@ -1,12 +1,17 @@
 package dev.gaborbiro.notes.features.widget.views
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.dp
 import androidx.glance.GlanceModifier
 import androidx.glance.action.Action
 import androidx.glance.appwidget.lazy.LazyColumn
+import androidx.glance.layout.Spacer
+import androidx.glance.layout.padding
+import androidx.glance.layout.size
 import dev.gaborbiro.notes.R
 import dev.gaborbiro.notes.features.common.model.RecordUIModel
 import dev.gaborbiro.notes.features.common.model.TemplateUIModel
+import dev.gaborbiro.notes.ui.theme.PaddingWidgetHalf
 
 @Composable
 fun RecordsList(
@@ -19,7 +24,8 @@ fun RecordsList(
     onTemplatesExpandButtonTapped: () -> Unit,
 ) {
     LazyColumn(
-        modifier = modifier,
+        modifier = modifier
+            .padding(vertical = PaddingWidgetHalf),
     ) {
         items(
             count = recentRecords.size + topTemplates.size + 1,
@@ -65,6 +71,8 @@ fun RecordsList(
                             template = template,
                             tapActionProvider = templateTapActionProvider(template.templateId),
                         )
+                    } else {
+                        Spacer(modifier = GlanceModifier.size(5.dp))
                     }
                 }
             }

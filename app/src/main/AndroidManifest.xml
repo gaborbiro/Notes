@@ -32,7 +32,8 @@
             android:excludeFromRecents="true"
             android:exported="true"
             android:launchMode="singleInstance"
-            android:theme="@style/Theme.Transparent" />
+            android:theme="@style/Theme.Transparent"
+            android:windowSoftInputMode="adjustResize" />
 
         <receiver
             android:name=".features.widget.NotesWidgetReceiver"

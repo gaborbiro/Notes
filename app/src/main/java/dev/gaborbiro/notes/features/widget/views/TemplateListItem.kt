@@ -2,7 +2,6 @@ package dev.gaborbiro.notes.features.widget.views
 
 import android.graphics.Bitmap
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.unit.dp
 import androidx.glance.GlanceModifier
 import androidx.glance.Image
 import androidx.glance.ImageProvider
@@ -17,8 +16,8 @@ import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.text.Text
 import dev.gaborbiro.notes.features.common.model.TemplateUIModel
-import dev.gaborbiro.notes.ui.theme.PaddingDefaultWidget
-import dev.gaborbiro.notes.ui.theme.PaddingHalfWidget
+import dev.gaborbiro.notes.ui.theme.PaddingWidgetDefault
+import dev.gaborbiro.notes.ui.theme.PaddingWidgetHalf
 
 @Composable
 fun WidgetTemplateListItem(
@@ -28,7 +27,7 @@ fun WidgetTemplateListItem(
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
-            .padding(vertical = PaddingDefaultWidget, horizontal = PaddingDefaultWidget)
+            .padding(vertical = PaddingWidgetHalf, horizontal = PaddingWidgetDefault)
             .clickable(tapActionProvider)
     ) {
         template.bitmap
@@ -37,19 +36,19 @@ fun WidgetTemplateListItem(
                     provider = ImageProvider(image),
                     contentDescription = "note image",
                     modifier = GlanceModifier
-                        .size(60.dp),
+                        .size(WidgetTemplateImageSize),
                     contentScale = ContentScale.Crop,
                 )
             }
             ?: run {
-                Spacer(modifier = GlanceModifier.size(60.dp))
+                Spacer(modifier = GlanceModifier.size(WidgetTemplateImageSize))
             }
         Text(
             text = template.title,
             modifier = GlanceModifier
                 .defaultWeight()
                 .fillMaxHeight()
-                .padding(start = PaddingDefaultWidget),
+                .padding(start = PaddingWidgetDefault),
             maxLines = 2,
             style = titleTextStyle
         )

@@ -8,7 +8,8 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 
-val WidgetImageSize = 68.dp
+val WidgetImageSize = 64.dp
+val WidgetTemplateImageSize = 48.dp
 
 val sectionTitleBackground
     @Composable get() = GlanceTheme.colors.tertiaryContainer

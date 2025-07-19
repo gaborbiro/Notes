@@ -20,16 +20,15 @@ class RecordsUIMapper(
     }
 
     private fun map(record: Record, maxImageSizePx: Int? = null): RecordUIModel {
-        var bitmap: Bitmap? = null
-        bitmap = record.template.image?.let { bitmapStore.loadBitmap(it, maxImageSizePx) }
+        val bitmap: Bitmap? = record.template.image?.let { bitmapStore.loadBitmap(it, maxImageSizePx) }
         val timestamp = record.timestamp
         val timestampStr = when {
             !timestamp.isBefore(LocalDateTime.now().truncatedTo(ChronoUnit.DAYS)) -> {
-                "today at ${timestamp.formatShortTime()}"
+                "Today at ${timestamp.formatShortTime()}"
             }
 
             !timestamp.isBefore(LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).minusDays(1)) -> {
-                "yesterday at ${timestamp.formatShortTime()}"
+                "Yesterday at ${timestamp.formatShortTime()}"
             }
 
             else -> timestamp.formatShort()

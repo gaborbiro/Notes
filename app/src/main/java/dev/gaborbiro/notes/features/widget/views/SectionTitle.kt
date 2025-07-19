@@ -15,14 +15,15 @@ import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.padding
 import androidx.glance.layout.wrapContentHeight
 import androidx.glance.text.Text
-import dev.gaborbiro.notes.ui.theme.PaddingDefaultWidget
-import dev.gaborbiro.notes.ui.theme.PaddingDoubleWidget
+import dev.gaborbiro.notes.ui.theme.PaddingWidgetDefault
+import dev.gaborbiro.notes.ui.theme.PaddingWidgetDouble
+import dev.gaborbiro.notes.ui.theme.PaddingWidgetHalf
 
 @Composable
 fun SectionTitle(title: String, @DrawableRes trailingImage: Int? = null, onClick: () -> Unit) {
     Box(
         modifier = GlanceModifier
-            .padding(horizontal = PaddingDefaultWidget)
+            .padding(horizontal = PaddingWidgetDefault)
             .clickable(onClick),
         contentAlignment = Alignment.CenterEnd,
     ) {
@@ -32,14 +33,14 @@ fun SectionTitle(title: String, @DrawableRes trailingImage: Int? = null, onClick
                 .background(sectionTitleBackground)
                 .wrapContentHeight()
                 .fillMaxWidth()
-                .padding(PaddingDoubleWidget)
+                .padding(horizontal = PaddingWidgetDouble, vertical = PaddingWidgetHalf)
                 .cornerRadius(4.dp),
             style = sectionTitleTextStyle,
         )
         trailingImage?.let {
             Image(
                 modifier = GlanceModifier
-                    .padding(end = PaddingDefaultWidget),
+                    .padding(end = PaddingWidgetDefault),
                 provider = ImageProvider(trailingImage),
                 contentDescription = "",
             )
