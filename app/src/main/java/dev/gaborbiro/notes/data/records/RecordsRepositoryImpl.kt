@@ -1,6 +1,5 @@
 package dev.gaborbiro.notes.data.records
 
-import android.net.Uri
 import androidx.room.Transaction
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.data.records.domain.model.Record
@@ -10,7 +9,7 @@ import dev.gaborbiro.notes.store.db.records.RecordsDAO
 import dev.gaborbiro.notes.store.db.records.TemplatesDAO
 import dev.gaborbiro.notes.store.db.records.model.RecordDBModel
 import dev.gaborbiro.notes.store.db.records.model.TemplateDBModel
-import dev.gaborbiro.notes.store.file.DocumentDeleter
+import dev.gaborbiro.notes.store.file.FileStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
@@ -21,7 +20,7 @@ class RecordsRepositoryImpl(
     private val templatesDAO: TemplatesDAO,
     private val recordsDAO: RecordsDAO,
     private val mapper: DBMapper,
-    private val documentDeleter: DocumentDeleter,
+    private val fileStore: FileStore,
 ) : RecordsRepository {
 
     override suspend fun getRecords(since: LocalDateTime? /* = null */): List<Record> {
@@ -33,7 +32,7 @@ class RecordsRepositoryImpl(
         return mapper.map(filteredRecords)
     }
 
-    override suspend fun getTemplates(image: Uri, title: String): List<Template> {
+    override suspend fun getTemplates(image: String, title: String): List<Template> {
         return templatesDAO.get(image, title).map { mapper.map(it) }
     }
 
@@ -99,7 +98,7 @@ class RecordsRepositoryImpl(
 
     override suspend fun updateTemplate(
         templateId: Long,
-        image: Uri?,/* = null */
+        image: String?,/* = null */
         title: String?,/* = null */
         description: String?,/* = null */
     ) {
@@ -144,9 +143,9 @@ class RecordsRepositoryImpl(
         }
     }
 
-    private suspend fun deleteImageIfUnused(image: Uri): Boolean {
+    private suspend fun deleteImageIfUnused(image: String): Boolean {
         if (templatesDAO.get(image).isEmpty()) {
-            return documentDeleter.delete(image)
+            fileStore.delete(image)
         }
         return false
     }

@@ -13,14 +13,14 @@ class RecordsUIMapper(
     private val bitmapStore: BitmapStore,
 ) {
 
-    fun map(records: List<Record>, maxImageSizePx: Int? = null): List<RecordUIModel> {
+    fun map(records: List<Record>, thumbnail: Boolean): List<RecordUIModel> {
         return records.map {
-            map(it, maxImageSizePx)
+            map(it, thumbnail)
         }
     }
 
-    private fun map(record: Record, maxImageSizePx: Int? = null): RecordUIModel {
-        val bitmap: Bitmap? = record.template.image?.let { bitmapStore.loadBitmap(it, maxImageSizePx) }
+    private fun map(record: Record, thumbnail: Boolean): RecordUIModel {
+        val bitmap: Bitmap? = record.template.image?.let { bitmapStore.loadBitmap(it, thumbnail) }
         val timestamp = record.timestamp
         val timestampStr = when {
             !timestamp.isBefore(LocalDateTime.now().truncatedTo(ChronoUnit.DAYS)) -> {

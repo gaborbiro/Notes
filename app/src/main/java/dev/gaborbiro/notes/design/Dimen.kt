@@ -1,4 +1,4 @@
-package dev.gaborbiro.notes.ui.theme
+package dev.gaborbiro.notes.design
 
 import androidx.compose.ui.unit.dp
 

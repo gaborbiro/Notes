@@ -1,14 +1,12 @@
 package dev.gaborbiro.notes.data.records.domain
 
-import android.net.Uri
-import dev.gaborbiro.notes.App
 import dev.gaborbiro.notes.data.records.DBMapper
 import dev.gaborbiro.notes.data.records.RecordsRepositoryImpl
 import dev.gaborbiro.notes.data.records.domain.model.Record
 import dev.gaborbiro.notes.data.records.domain.model.Template
 import dev.gaborbiro.notes.data.records.domain.model.ToSaveRecord
 import dev.gaborbiro.notes.store.db.AppDatabase
-import dev.gaborbiro.notes.store.file.DocumentDeleter
+import dev.gaborbiro.notes.store.file.FileStore
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDateTime
 
@@ -18,22 +16,20 @@ interface RecordsRepository {
 
         private lateinit var INSTANCE: RecordsRepository
 
-        fun get(): RecordsRepository {
+        fun get(fileStore: FileStore): RecordsRepository {
             if (!::INSTANCE.isInitialized) {
                 INSTANCE = RecordsRepositoryImpl(
                     templatesDAO = AppDatabase.getInstance().templatesDAO(),
                     recordsDAO = AppDatabase.getInstance().recordsDAO(),
                     mapper = DBMapper.get(),
-                    documentDeleter = DocumentDeleter(App.appContext),
-//                    documentWriter = DocumentWriter(App.appContext),
-//                    bitmapLoader = BitmapLoader(App.appContext),
+                    fileStore = fileStore,
                 )
             }
             return INSTANCE
         }
     }
 
-    suspend fun getTemplates(image: Uri, title: String): List<Template>
+    suspend fun getTemplates(image: String, title: String): List<Template>
 
     suspend fun getRecords(since: LocalDateTime? = null): List<Record>
 
@@ -65,9 +61,9 @@ interface RecordsRepository {
      */
     suspend fun updateTemplate(
         templateId: Long,
-        image: Uri? = null,
+        image: String? = null,
         title: String? = null,
-        description: String? = null
+        description: String? = null,
     )
 
     suspend fun deleteImage(templateId: Long)

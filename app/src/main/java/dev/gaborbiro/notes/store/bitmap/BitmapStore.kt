@@ -1,113 +1,143 @@
 package dev.gaborbiro.notes.store.bitmap
 
-import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
-import android.net.Uri
 import android.util.LruCache
-import dev.gaborbiro.notes.store.file.DocumentWriter
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.io.FileNotFoundException
-import java.time.LocalDateTime
+import dev.gaborbiro.notes.store.file.FileStore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.io.File
 
 class BitmapStore(
-    private val context: Context,
+    private val fileStore: FileStore,
 ) {
-    private var memoryCache: LruCache<String, Bitmap>
+    private var cache: LruCache<String, Bitmap>
+    private var thumbnailCache: LruCache<String, Bitmap>
 
-    private val documentWriter = DocumentWriter(context)
+    private val maxThumbnailSizePx = 128 // maximum height and length of thumbnail variant of images
 
     init {
-        val maxMemory = (Runtime.getRuntime().maxMemory() / 1024).toInt()
-        val cacheSize = maxMemory / 6
-        memoryCache = object : LruCache<String, Bitmap>(cacheSize) {
+        val maxMemoryBytes = (Runtime.getRuntime().maxMemory()).toInt()
+        val cacheSize = maxMemoryBytes / 6
+        cache = object : LruCache<String, Bitmap>(/* maxSize = */ cacheSize) {
 
             override fun sizeOf(key: String, bitmap: Bitmap): Int {
-                return bitmap.byteCount / 1024
+                return bitmap.byteCount
+            }
+        }
+        thumbnailCache = object : LruCache<String, Bitmap>(/* maxSize = */ cacheSize) {
+
+            override fun sizeOf(key: String, bitmap: Bitmap): Int {
+                return bitmap.byteCount
             }
         }
     }
 
-    fun loadBitmap(uri: Uri, maxSizePx: Int? = null): Bitmap? {
-        val imageKey = uri.toString()
-        var bitmap = memoryCache[imageKey]
+    fun loadBitmap(filename: String, thumbnail: Boolean): Bitmap? {
+        val path = fileStore.resolveFilePath(filename)
+        val file = File(path)
+        val thumbnailFilename = insertSuffixToFilename(filename, "-thumb")
+        var bitmap = if (thumbnail) thumbnailCache[thumbnailFilename] else cache[filename]
 
         if (bitmap == null) {
-            bitmap = if (maxSizePx != null) {
-                val listener = ImageDecoder.OnHeaderDecodedListener { decoder, info, _ ->
-                    var height = info.size.height
-                    var width = info.size.width
-                    var update = false
-                    if (height > width && width > maxSizePx) {
-                        height = ((height.toFloat() / width) * maxSizePx).toInt()
-                        width = maxSizePx
-                        update = true
+            bitmap = if (thumbnail) {
+                val thumbnailPath = fileStore.resolveFilePath(thumbnailFilename)
+                val thumbnailFile = File(thumbnailPath)
+                if (thumbnailFile.exists()) {
+                    ImageDecoder.decodeBitmap(ImageDecoder.createSource(thumbnailFile))
+                } else {
+                    val decodedListener = ImageDecoder.OnHeaderDecodedListener { decoder, info, _ ->
+                        var height = info.size.height
+                        var width = info.size.width
+                        var update = false
+                        if (height > width && width > maxThumbnailSizePx) {
+                            height = ((height.toFloat() / width) * maxThumbnailSizePx).toInt()
+                            width = maxThumbnailSizePx
+                            update = true
+                        }
+                        if (width > height && height > maxThumbnailSizePx) {
+                            width = ((width.toFloat() / height) * maxThumbnailSizePx).toInt()
+                            height = maxThumbnailSizePx
+                            update = true
+                        }
+                        if (width == height && width > maxThumbnailSizePx) {
+                            width = maxThumbnailSizePx
+                            height = maxThumbnailSizePx
+                            update = true
+                        }
+                        if (update) {
+                            decoder.setTargetSize(width, height)
+                        }
                     }
-                    if (width > height && height > maxSizePx) {
-                        width = ((width.toFloat() / height) * maxSizePx).toInt()
-                        height = maxSizePx
-                        update = true
+                    if (file.exists()) {
+                        ImageDecoder.decodeBitmap(ImageDecoder.createSource(file), decodedListener)
+                            .also {
+                                writeBitmap(it, thumbnailFilename)
+                            }
+                    } else {
+                        null
                     }
-                    if (width == height && width > maxSizePx) {
-                        width = maxSizePx
-                        height = maxSizePx
-                        update = true
-                    }
-                    if (update) {
-                        decoder.setTargetSize(width, height)
-                    }
-                }
-                try {
-                    ImageDecoder.decodeBitmap(
-                        ImageDecoder.createSource(context.contentResolver, uri),
-                        listener
-                    )
-                } catch (e: FileNotFoundException) {
-                    null
                 }
             } else {
-                try {
-                    ImageDecoder.decodeBitmap(
-                        ImageDecoder.createSource(
-                            context.contentResolver,
-                            uri
-                        )
-                    )
-                } catch (e: FileNotFoundException) {
+                if (file.exists()) {
+                    ImageDecoder.decodeBitmap(ImageDecoder.createSource(file))
+                } else {
                     null
                 }
             }
 
-
-            bitmap?.let {
-                memoryCache.put(imageKey, bitmap)
-            }
-            bitmap ?: run {
-                memoryCache.remove(imageKey)
-            }
+            bitmap
+                ?.let {
+                    if (thumbnail) {
+                        thumbnailCache.put(thumbnailFilename, bitmap)
+                    } else {
+                        cache.put(filename, bitmap)
+                    }
+                }
+                ?: run {
+                    if (thumbnail) {
+                        thumbnailCache.remove(thumbnailFilename)
+                    } else {
+                        cache.remove(filename)
+                    }
+                }
         }
         return bitmap
     }
 
-    suspend fun writeBitmap(bitmap: Bitmap): Uri {
-        return ByteArrayOutputStream().let { stream ->
-            bitmap.compress(
-                /* format = */ Bitmap.CompressFormat.PNG,
-                /* quality = */ 0,  // quality is ignored with PNG
-                /* stream = */ stream
-            )
-            val inStream = ByteArrayInputStream(stream.toByteArray())
-            documentWriter.write(inStream, "${LocalDateTime.now()}.png")
+    fun writeBitmap(bitmap: Bitmap, filename: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            fileStore.write(filename) { outputStream ->
+                bitmap.compress(
+                    /* format = */ Bitmap.CompressFormat.PNG,
+                    /* quality = */ 0,  // quality is ignored with PNG
+                    /* stream = */ outputStream
+                )
+            }
+        }
+        filename
+    }
+
+    /**
+     * Inserts [suffix] before the extension in [filename], or appends it if there's no extension.
+     *
+     * Rules:
+     *  - "photo.png" + "-thumb" -> "photo-thumb.png"
+     *  - "archive.tar.gz" + "-small" -> "archive.tar-small.gz"
+     *  - "readme" + "-v2" -> "readme-v2"
+     *  - ".gitignore" + "-old" -> ".gitignore-old"  (leading dot not treated as extension)
+     *  - "2025-07-28T20:50:19.901788.png" + "-thumb" -> "2025-07-28T20:50:19.901788-thumb.png"
+     */
+    fun insertSuffixToFilename(filename: String, suffix: String): String {
+        if (filename.isEmpty()) return filename
+        val lastDot = filename.lastIndexOf('.')
+        return if (lastDot > 0) { // dot not at start
+            val name = filename.substring(0, lastDot)
+            val ext = filename.substring(lastDot) // includes '.'
+            "$name$suffix$ext"
+        } else {
+            "$filename$suffix"
         }
     }
 }
-
-//private val imageSizePx = context.resources.displayMetrics.density.let { scale ->
-//    (60 * scale + .5f)
-//}
-//private val dummyBitmap: Bitmap = Bitmap
-//    .createBitmap(imageSizePx.toInt(), imageSizePx.toInt(), Bitmap.Config.ARGB_8888)
-//    .also {
-//        it.eraseColor(android.graphics.Color.CYAN)
-//    }

@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
@@ -53,7 +52,7 @@ import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.features.common.RecordsUIMapper
 import dev.gaborbiro.notes.features.notes.views.NoteListItem
 import dev.gaborbiro.notes.features.widget.NotesWidget
-import dev.gaborbiro.notes.ui.theme.PaddingDefault
+import dev.gaborbiro.notes.design.PaddingDefault
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

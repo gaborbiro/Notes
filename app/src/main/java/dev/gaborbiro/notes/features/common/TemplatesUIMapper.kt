@@ -9,15 +9,15 @@ class TemplatesUIMapper(
     private val bitmapStore: BitmapStore,
 ) {
 
-    fun map(records: List<Template>, maxImageSizePx: Int): List<TemplateUIModel> {
+    fun map(records: List<Template>, thumbnail: Boolean): List<TemplateUIModel> {
         return records.map {
-            map(it, maxImageSizePx)
+            map(it, thumbnail)
         }
     }
 
-    private fun map(template: Template, maxImageSizePx: Int): TemplateUIModel {
+    private fun map(template: Template, thumbnail: Boolean): TemplateUIModel {
         var bitmap: Bitmap? = null
-        bitmap = template.image?.let { bitmapStore.loadBitmap(it, maxImageSizePx) }
+        bitmap = template.image?.let { bitmapStore.loadBitmap(it, thumbnail) }
         return TemplateUIModel(
             templateId = template.id,
             bitmap = bitmap,

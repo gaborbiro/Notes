@@ -33,7 +33,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -43,8 +42,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.gaborbiro.notes.R
 import dev.gaborbiro.notes.features.common.model.RecordUIModel
-import dev.gaborbiro.notes.ui.theme.PaddingDefault
-import dev.gaborbiro.notes.ui.theme.PaddingQuarter
+import dev.gaborbiro.notes.design.PaddingDefault
+import dev.gaborbiro.notes.design.PaddingQuarter
 
 
 @Composable

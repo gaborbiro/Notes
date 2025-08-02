@@ -15,9 +15,9 @@ import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.padding
 import androidx.glance.layout.wrapContentHeight
 import androidx.glance.text.Text
-import dev.gaborbiro.notes.ui.theme.PaddingWidgetDefault
-import dev.gaborbiro.notes.ui.theme.PaddingWidgetDouble
-import dev.gaborbiro.notes.ui.theme.PaddingWidgetHalf
+import dev.gaborbiro.notes.design.PaddingWidgetDefault
+import dev.gaborbiro.notes.design.PaddingWidgetDouble
+import dev.gaborbiro.notes.design.PaddingWidgetHalf
 
 @Composable
 fun SectionTitle(title: String, @DrawableRes trailingImage: Int? = null, onClick: () -> Unit) {

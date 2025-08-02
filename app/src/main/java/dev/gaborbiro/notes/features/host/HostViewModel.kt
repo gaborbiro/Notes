@@ -4,7 +4,7 @@ import android.net.Uri
 import androidx.annotation.UiThread
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.features.common.BaseViewModel
-import dev.gaborbiro.notes.features.host.usecase.CacheImageUseCase
+import dev.gaborbiro.notes.features.host.usecase.SaveImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.CreateRecordUseCase
 import dev.gaborbiro.notes.features.host.usecase.CreateValidationResult
 import dev.gaborbiro.notes.features.host.usecase.EditImageValidationResult
@@ -29,7 +29,7 @@ class HostViewModel(
     private val editTemplateUseCase: EditTemplateUseCase,
     private val validateEditRecordUseCase: ValidateEditRecordUseCase,
     private val validateCreateRecordUseCase: ValidateCreateRecordUseCase,
-    private val cacheImageUseCase: CacheImageUseCase,
+    private val saveImageUseCase: SaveImageUseCase,
     private val validateEditImageUseCase: ValidateEditImageUseCase,
     private val editRecordImageUseCase: EditRecordImageUseCase,
     private val editTemplateImageUseCase: EditTemplateImageUseCase,
@@ -83,7 +83,7 @@ class HostViewModel(
 
     fun onStartWithShowImage(recordId: Long) {
         runSafely {
-            val image = getRecordImageUseCase.execute(recordId)!!
+            val image = getRecordImageUseCase.execute(recordId, thumbnail = false)!!
             _uiState.update {
                 it.copy(
                     dialog = DialogState.ShowImageDialog(image)
@@ -121,12 +121,12 @@ class HostViewModel(
     }
 
     @UiThread
-    fun onPhotoTaken(uri: Uri) {
+    fun onPhotoTaken(filename: String) {
         runSafely {
             _uiState.update {
                 it.copy(
                     showCamera = false,
-                    dialog = DialogState.InputDialogState.CreateWithImage(image = uri),
+                    dialog = DialogState.InputDialogState.CreateWithImage(image = filename),
                 )
             }
         }
@@ -135,14 +135,14 @@ class HostViewModel(
     @UiThread
     fun onImagePicked(uri: Uri?) {
         runSafely {
-            val persistedUri = cacheImageUseCase.execute(uri)
+            val persistedFilename = uri?.let { saveImageUseCase.execute(it) }
             val imagePicker = _uiState.value.imagePicker!!
             when (imagePicker) {
                 ImagePickerState.Create -> {
                     _uiState.update {
                         it.copy(
                             imagePicker = null,
-                            dialog = DialogState.InputDialogState.CreateWithImage(image = persistedUri),
+                            dialog = DialogState.InputDialogState.CreateWithImage(image = persistedFilename),
                         )
                     }
                 }
@@ -157,7 +157,7 @@ class HostViewModel(
                                     dialog = DialogState.EditImageTargetConfirmationDialog(
                                         recordId = imagePicker.recordId,
                                         count = result.count,
-                                        image = persistedUri,
+                                        image = persistedFilename,
                                     ),
                                 )
                             }
@@ -165,7 +165,7 @@ class HostViewModel(
 
                         EditImageValidationResult.Valid -> {
                             refreshWidgetAndClose()
-                            editRecordImageUseCase.execute(imagePicker.recordId, persistedUri)
+                            editRecordImageUseCase.execute(imagePicker.recordId, persistedFilename)
                         }
                     }
                 }

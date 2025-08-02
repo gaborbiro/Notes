@@ -11,7 +11,7 @@ import androidx.glance.layout.size
 import dev.gaborbiro.notes.R
 import dev.gaborbiro.notes.features.common.model.RecordUIModel
 import dev.gaborbiro.notes.features.common.model.TemplateUIModel
-import dev.gaborbiro.notes.ui.theme.PaddingWidgetHalf
+import dev.gaborbiro.notes.design.PaddingWidgetHalf
 
 @Composable
 fun RecordsList(

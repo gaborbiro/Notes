@@ -1,11 +1,13 @@
 package dev.gaborbiro.notes.features.notes
 
 import android.util.Log
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.features.common.BaseViewModel
 import dev.gaborbiro.notes.features.common.RecordsUIMapper
 import dev.gaborbiro.notes.features.common.model.RecordUIModel
+import dev.gaborbiro.notes.util.px
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,7 +27,9 @@ class NotesViewModel(
     fun loadRecords(search: String?) {
         viewModelScope.launch {
             repository.getRecordsFlow(search)
-                .map(uiMapper::map)
+                .map {
+                    uiMapper.map(it, thumbnail = true)
+                }
                 .collect { records ->
                     _uiState.update {
                         it.copy(records)

@@ -22,7 +22,7 @@ sealed class DialogState {
     data class EditImageTargetConfirmationDialog(
         val recordId: Long,
         val count: Int,
-        val image: Uri?,
+        val image: String?,
     ) : DialogState()
 
     data class ShowImageDialog(val bitmap: Bitmap) : DialogState()
@@ -38,7 +38,7 @@ sealed class DialogState {
         }
 
         data class CreateWithImage(
-            val image: Uri?,
+            val image: String?,
             override val validationError: String? = null,
         ) : InputDialogState(validationError) {
             override fun withValidationError(validationError: String?) =
@@ -47,7 +47,7 @@ sealed class DialogState {
 
         data class Edit(
             val recordId: Long,
-            val image: Uri?,
+            val image: String?,
             val title: String,
             val description: String,
             override val validationError: String? = null,

@@ -10,10 +10,10 @@ class GetRecordImageUseCase(
     private val bitmapStore: BitmapStore
 ) : BaseUseCase() {
 
-    suspend fun execute(recordId: Long): Bitmap? {
+    suspend fun execute(recordId: Long, thumbnail: Boolean): Bitmap? {
         return repository.getRecord(recordId)!!.template.image
             ?.let {
-                bitmapStore.loadBitmap(it)
+                bitmapStore.loadBitmap(it, thumbnail)
             }
     }
 }

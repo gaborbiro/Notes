@@ -1,6 +1,5 @@
 package dev.gaborbiro.notes.features.host.usecase
 
-import android.net.Uri
 import androidx.annotation.UiThread
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.data.records.domain.model.ToSaveRecord
@@ -14,7 +13,7 @@ class CreateRecordUseCase(
 
     @UiThread
     suspend fun execute(
-        image: Uri?,
+        image: String?,
         title: String,
         description: String
     ) {

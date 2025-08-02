@@ -1,11 +1,10 @@
 package dev.gaborbiro.notes.features.host.usecase
 
-import android.net.Uri
 import dev.gaborbiro.notes.features.common.BaseUseCase
 
 class ValidateCreateRecordUseCase : BaseUseCase() {
 
-    suspend fun execute(image: Uri?, title: String, description: String): CreateValidationResult {
+    suspend fun execute(image: String?, title: String, description: String): CreateValidationResult {
         if (title.isBlank()) {
             return CreateValidationResult.Error("Cannot be empty")
         }

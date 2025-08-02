@@ -20,8 +20,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import dev.gaborbiro.notes.ui.theme.PaddingDefault
-import dev.gaborbiro.notes.ui.theme.PaddingHalf
+import dev.gaborbiro.notes.design.PaddingDefault
+import dev.gaborbiro.notes.design.PaddingHalf
 
 @Composable
 fun EditTargetConfirmationDialogContent(

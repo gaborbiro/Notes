@@ -14,13 +14,16 @@ import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.data.records.domain.model.Record
 import dev.gaborbiro.notes.data.records.domain.model.Template
 import dev.gaborbiro.notes.features.widget.NotesWidget
+import dev.gaborbiro.notes.store.file.FileStoreFactoryImpl
 import dev.gaborbiro.notes.util.gson
 import java.time.LocalDateTime
 
 class ReloadWorkRequest(
     appContext: Context,
-    private val workerParameters: WorkerParameters
+    private val workerParameters: WorkerParameters,
 ) : CoroutineWorker(appContext, workerParameters) {
+
+    private val fileStore = FileStoreFactoryImpl(appContext).getStore("public", keepFiles = true)
 
     companion object {
         private const val RECORD_DAYS_TO_DISPLAY_DEFAULT = 7
@@ -52,7 +55,7 @@ class ReloadWorkRequest(
 
     override suspend fun doWork(): Result {
         return try {
-            val repository = RecordsRepository.get()
+            val repository = RecordsRepository.get(fileStore)
             val recordDaysToDisplay =
                 workerParameters.inputData.getInt(
                     PREFS_RECORD_DAYS_TO_DISPLAY,

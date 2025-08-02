@@ -28,8 +28,8 @@ import dev.gaborbiro.notes.features.widget.views.NotesWidgetContent
 import dev.gaborbiro.notes.features.widget.views.WidgetImageSize
 import dev.gaborbiro.notes.features.widget.workers.ReloadWorkRequest
 import dev.gaborbiro.notes.store.bitmap.BitmapStore
-import dev.gaborbiro.notes.ui.theme.NotesGlanceColorScheme
-import dev.gaborbiro.notes.ui.theme.NotesTheme
+import dev.gaborbiro.notes.design.NotesGlanceColorScheme
+import dev.gaborbiro.notes.store.file.FileStoreFactoryImpl
 import dev.gaborbiro.notes.util.gson
 import dev.gaborbiro.notes.util.px
 
@@ -65,16 +65,17 @@ class NotesWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         provideContent {
             val prefs = currentState<Preferences>()
-            val bitmapStore = BitmapStore(LocalContext.current)
+            val fileStore = FileStoreFactoryImpl(LocalContext.current).getStore("public", keepFiles = true)
+            val bitmapStore = BitmapStore(fileStore)
             val recordsUIMapper = RecordsUIMapper(bitmapStore)
             val recentRecords = recordsUIMapper.map(
                 records = prefs.retrieveRecentRecords(),
-                maxImageSizePx = 60.dp.px().toInt()
+                thumbnail = true,
             )
             val templatesUIMapper = TemplatesUIMapper(bitmapStore)
             val topTemplates = templatesUIMapper.map(
                 records = prefs.retrieveTopTemplates(),
-                maxImageSizePx = WidgetImageSize.px().toInt()
+                thumbnail = true,
             )
 
             var showTopTemplates by remember { mutableStateOf(false) }
@@ -129,4 +130,3 @@ class NotesWidgetReceiverSmall : GlanceAppWidgetReceiver() {
 
     override val glanceAppWidget: GlanceAppWidget = NotesWidget()
 }
-

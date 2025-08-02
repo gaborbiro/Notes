@@ -13,24 +13,24 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
+import dev.gaborbiro.notes.design.NotesTheme
 import dev.gaborbiro.notes.features.common.BaseErrorDialogActivity
 import dev.gaborbiro.notes.features.common.BaseViewModel
-import dev.gaborbiro.notes.features.host.usecase.CacheImageUseCase
+import dev.gaborbiro.notes.features.host.usecase.SaveImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.CreateRecordUseCase
 import dev.gaborbiro.notes.features.host.usecase.EditRecordImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.EditRecordUseCase
@@ -45,7 +45,7 @@ import dev.gaborbiro.notes.features.host.views.EditTargetConfirmationDialogConte
 import dev.gaborbiro.notes.features.host.views.NoteInputDialogContent
 import dev.gaborbiro.notes.features.widget.NotesWidget
 import dev.gaborbiro.notes.store.bitmap.BitmapStore
-import dev.gaborbiro.notes.ui.theme.NotesTheme
+import dev.gaborbiro.notes.store.file.FileStoreFactoryImpl
 import java.io.File
 import java.time.LocalDateTime
 
@@ -127,9 +127,11 @@ class HostActivity : BaseErrorDialogActivity() {
         private const val EXTRA_RECORD_ID = "record_id"
     }
 
+    private val fileStore = FileStoreFactoryImpl(this).getStore("public", keepFiles = true)
+
     private val viewModel by lazy {
-        val repository = RecordsRepository.get()
-        val bitmapStore = BitmapStore(this)
+        val repository = RecordsRepository.get(fileStore)
+        val bitmapStore = BitmapStore(fileStore)
         HostViewModel(
             repository,
             CreateRecordUseCase(repository),
@@ -137,7 +139,7 @@ class HostActivity : BaseErrorDialogActivity() {
             EditTemplateUseCase(repository),
             ValidateEditRecordUseCase(repository),
             ValidateCreateRecordUseCase(),
-            CacheImageUseCase(bitmapStore),
+            SaveImageUseCase(this, bitmapStore),
             ValidateEditImageUseCase(repository),
             EditRecordImageUseCase(repository),
             EditTemplateImageUseCase(repository),
@@ -195,17 +197,13 @@ class HostActivity : BaseErrorDialogActivity() {
             val uiState: HostUIState by viewModel.uiState.collectAsStateWithLifecycle()
 
             if (uiState.showCamera) {
-                val file = File(filesDir, "public/${LocalDateTime.now()}.png")
-                val uri = FileProvider.getUriForFile(
-                    /* context = */ this,
-                    /* authority = */ applicationContext.packageName + ".provider",
-                    /* file = */ file,
-                )
+                val filename = "${LocalDateTime.now()}.png"
+                val uri = fileStore.createFile(filename).toUri()
 
                 val launcher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.TakePicture(),
                     onResult = {
-                        viewModel.onPhotoTaken(uri)
+                        viewModel.onPhotoTaken(filename)
                     }
                 )
                 SideEffect {
@@ -354,4 +352,3 @@ class HostActivity : BaseErrorDialogActivity() {
         }
     }
 }
-

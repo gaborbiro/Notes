@@ -1,6 +1,8 @@
 package dev.gaborbiro.notes.features.widget.views
 
+import android.graphics.Bitmap
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
@@ -8,11 +10,15 @@ import androidx.glance.appwidget.cornerRadius
 import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
+import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.wrapContentHeight
+import dev.gaborbiro.notes.design.NotesGlanceColorScheme
 import dev.gaborbiro.notes.features.common.model.RecordUIModel
 import dev.gaborbiro.notes.features.common.model.TemplateUIModel
 import dev.gaborbiro.notes.features.widget.NotesWidgetNavigator
+import dev.gaborbiro.notes.features.widget.NotesWidgetNavigatorImpl
+import androidx.core.graphics.createBitmap
 
 @Composable
 fun NotesWidgetContent(

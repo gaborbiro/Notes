@@ -2,6 +2,7 @@ package dev.gaborbiro.notes.features.widget
 
 import android.content.Context
 import androidx.glance.GlanceId
+import androidx.glance.LocalContext
 import androidx.glance.action.Action
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
@@ -9,6 +10,7 @@ import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.features.host.HostActivity
+import dev.gaborbiro.notes.store.file.FileStoreFactoryImpl
 import dev.gaborbiro.notes.util.showSimpleNotification
 
 interface NotesWidgetNavigator {
@@ -99,8 +101,9 @@ class DuplicateNoteAction : ActionCallback {
         glanceId: GlanceId,
         parameters: ActionParameters
     ) {
+        val fileStore = FileStoreFactoryImpl(context).getStore("public", keepFiles = true)
         val recordId = parameters[ActionParameters.Key<Long>(PREFS_KEY_RECORD)]!!
-        val repo = RecordsRepository.get()
+        val repo = RecordsRepository.get(fileStore)
         val oldRecord = repo.getRecord(recordId)
         val newRecordId = repo.duplicateRecord(recordId)
         val newRecord = repo.getRecord(newRecordId)
@@ -118,8 +121,9 @@ class ApplyTemplateAction : ActionCallback {
         glanceId: GlanceId,
         parameters: ActionParameters
     ) {
+        val fileStore = FileStoreFactoryImpl(context).getStore("public", keepFiles = true)
         val templateId = parameters[ActionParameters.Key<Long>(PREFS_KEY_TEMPLATE)]!!
-        RecordsRepository.get().applyTemplate(templateId)
+        RecordsRepository.get(fileStore).applyTemplate(templateId)
     }
 }
 

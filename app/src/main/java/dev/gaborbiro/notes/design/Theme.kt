@@ -1,4 +1,4 @@
-package dev.gaborbiro.notes.ui.theme
+package dev.gaborbiro.notes.design
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -92,7 +92,6 @@ object NotesGlanceColorScheme {
 
     val colors: ColorProviders
         @Composable get() {
-            val context = androidx.glance.LocalContext.current
             return ColorProviders(
                 light = LightColorScheme,
                 dark = DarkColorScheme,
