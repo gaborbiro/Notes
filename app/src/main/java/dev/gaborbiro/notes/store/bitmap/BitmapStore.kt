@@ -3,6 +3,7 @@ package dev.gaborbiro.notes.store.bitmap
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.util.LruCache
+import dev.gaborbiro.notes.ImageFileFormat
 import dev.gaborbiro.notes.store.file.FileStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -14,6 +15,10 @@ class BitmapStore(
 ) {
     private var cache: LruCache<String, Bitmap>
     private var thumbnailCache: LruCache<String, Bitmap>
+
+    companion object {
+        const val THUMBNAIL_SUFFIX = "-thumb"
+    }
 
     private val maxThumbnailSizePx = 128 // maximum height and length of thumbnail variant of images
 
@@ -34,10 +39,10 @@ class BitmapStore(
         }
     }
 
-    fun loadBitmap(filename: String, thumbnail: Boolean): Bitmap? {
+    fun read(filename: String, thumbnail: Boolean): Bitmap? {
         val path = fileStore.resolveFilePath(filename)
         val file = File(path)
-        val thumbnailFilename = insertSuffixToFilename(filename, "-thumb")
+        val thumbnailFilename = insertSuffixToFilename(filename, THUMBNAIL_SUFFIX)
         var bitmap = if (thumbnail) thumbnailCache[thumbnailFilename] else cache[filename]
 
         if (bitmap == null) {
@@ -73,7 +78,7 @@ class BitmapStore(
                     if (file.exists()) {
                         ImageDecoder.decodeBitmap(ImageDecoder.createSource(file), decodedListener)
                             .also {
-                                writeBitmap(it, thumbnailFilename)
+                                write(thumbnailFilename, it)
                             }
                     } else {
                         null
@@ -106,11 +111,11 @@ class BitmapStore(
         return bitmap
     }
 
-    fun writeBitmap(bitmap: Bitmap, filename: String) {
+    fun write(filename: String, bitmap: Bitmap) {
         CoroutineScope(Dispatchers.IO).launch {
             fileStore.write(filename) { outputStream ->
                 bitmap.compress(
-                    /* format = */ Bitmap.CompressFormat.PNG,
+                    /* format = */ ImageFileFormat,
                     /* quality = */ 0,  // quality is ignored with PNG
                     /* stream = */ outputStream
                 )

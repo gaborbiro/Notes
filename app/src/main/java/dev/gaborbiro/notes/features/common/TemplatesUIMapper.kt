@@ -17,7 +17,7 @@ class TemplatesUIMapper(
 
     private fun map(template: Template, thumbnail: Boolean): TemplateUIModel {
         var bitmap: Bitmap? = null
-        bitmap = template.image?.let { bitmapStore.loadBitmap(it, thumbnail) }
+        bitmap = template.image?.let { bitmapStore.read(it, thumbnail) }
         return TemplateUIModel(
             templateId = template.id,
             bitmap = bitmap,

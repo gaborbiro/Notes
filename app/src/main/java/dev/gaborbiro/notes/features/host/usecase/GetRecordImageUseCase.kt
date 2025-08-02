@@ -13,7 +13,7 @@ class GetRecordImageUseCase(
     suspend fun execute(recordId: Long, thumbnail: Boolean): Bitmap? {
         return repository.getRecord(recordId)!!.template.image
             ?.let {
-                bitmapStore.loadBitmap(it, thumbnail)
+                bitmapStore.read(it, thumbnail)
             }
     }
 }

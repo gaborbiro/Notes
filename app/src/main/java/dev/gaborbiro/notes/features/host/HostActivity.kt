@@ -22,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -44,10 +43,9 @@ import dev.gaborbiro.notes.features.host.views.EditTarget
 import dev.gaborbiro.notes.features.host.views.EditTargetConfirmationDialogContent
 import dev.gaborbiro.notes.features.host.views.NoteInputDialogContent
 import dev.gaborbiro.notes.features.widget.NotesWidget
+import dev.gaborbiro.notes.imageFilename
 import dev.gaborbiro.notes.store.bitmap.BitmapStore
 import dev.gaborbiro.notes.store.file.FileStoreFactoryImpl
-import java.io.File
-import java.time.LocalDateTime
 
 
 class HostActivity : BaseErrorDialogActivity() {
@@ -197,7 +195,7 @@ class HostActivity : BaseErrorDialogActivity() {
             val uiState: HostUIState by viewModel.uiState.collectAsStateWithLifecycle()
 
             if (uiState.showCamera) {
-                val filename = "${LocalDateTime.now()}.png"
+                val filename = imageFilename()
                 val uri = fileStore.createFile(filename).toUri()
 
                 val launcher = rememberLauncherForActivityResult(
