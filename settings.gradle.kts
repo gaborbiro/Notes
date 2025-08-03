@@ -10,8 +10,13 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven { url 'https://androidx.dev/snapshots/latest/artifacts/repository' }
+        maven {
+            url = uri("https://androidx.dev/snapshots/latest/artifacts/repository")
+            content {
+                includeGroupByRegex("androidx\\..*")
+            }
+        }
     }
 }
 rootProject.name = "Notes"
-include ':app'
+include(":app")
