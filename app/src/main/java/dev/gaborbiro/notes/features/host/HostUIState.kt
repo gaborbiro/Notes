@@ -1,7 +1,6 @@
 package dev.gaborbiro.notes.features.host
 
 import android.graphics.Bitmap
-import android.net.Uri
 
 data class HostUIState(
     val showCamera: Boolean = false,
@@ -27,12 +26,12 @@ sealed class DialogState {
 
     data class ShowImageDialog(val bitmap: Bitmap) : DialogState()
 
-    sealed class InputDialogState(
+    sealed class InputDialog(
         open val validationError: String? = null,
     ) : DialogState() {
         data class Create(
             override val validationError: String? = null,
-        ) : InputDialogState(validationError) {
+        ) : InputDialog(validationError) {
             override fun withValidationError(validationError: String?) =
                 copy(validationError = validationError)
         }
@@ -40,7 +39,7 @@ sealed class DialogState {
         data class CreateWithImage(
             val image: String?,
             override val validationError: String? = null,
-        ) : InputDialogState(validationError) {
+        ) : InputDialog(validationError) {
             override fun withValidationError(validationError: String?) =
                 copy(validationError = validationError)
         }
@@ -51,12 +50,12 @@ sealed class DialogState {
             val title: String,
             val description: String,
             override val validationError: String? = null,
-        ) : InputDialogState(validationError) {
+        ) : InputDialog(validationError) {
             override fun withValidationError(validationError: String?) =
                 copy(validationError = validationError)
         }
 
-        abstract fun withValidationError(validationError: String?): InputDialogState
+        abstract fun withValidationError(validationError: String?): InputDialog
     }
 }
 

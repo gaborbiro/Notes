@@ -29,13 +29,13 @@ import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.design.NotesTheme
 import dev.gaborbiro.notes.features.common.BaseErrorDialogActivity
 import dev.gaborbiro.notes.features.common.BaseViewModel
-import dev.gaborbiro.notes.features.host.usecase.SaveImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.CreateRecordUseCase
 import dev.gaborbiro.notes.features.host.usecase.EditRecordImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.EditRecordUseCase
 import dev.gaborbiro.notes.features.host.usecase.EditTemplateImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.EditTemplateUseCase
 import dev.gaborbiro.notes.features.host.usecase.GetRecordImageUseCase
+import dev.gaborbiro.notes.features.host.usecase.SaveImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.ValidateCreateRecordUseCase
 import dev.gaborbiro.notes.features.host.usecase.ValidateEditImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.ValidateEditRecordUseCase
@@ -142,6 +142,7 @@ class HostActivity : BaseErrorDialogActivity() {
             EditRecordImageUseCase(repository),
             EditTemplateImageUseCase(repository),
             GetRecordImageUseCase(repository, bitmapStore),
+            bitmapStore,
         )
     }
 
@@ -244,7 +245,7 @@ class HostActivity : BaseErrorDialogActivity() {
     @Composable
     fun NotesDialog(dialogState: DialogState?) {
         when (dialogState) {
-            is DialogState.InputDialogState -> InputDialog(dialogState)
+            is DialogState.InputDialog -> InputDialog(dialogState)
             is DialogState.EditTargetConfirmationDialog -> EditTargetConfirmationDialog(dialogState)
             is DialogState.EditImageTargetConfirmationDialog -> EditImageTargetConfirmationDialog(
                 dialogState
@@ -259,13 +260,15 @@ class HostActivity : BaseErrorDialogActivity() {
     }
 
     @Composable
-    private fun InputDialog(dialogState: DialogState.InputDialogState) {
+    private fun InputDialog(dialogState: DialogState.InputDialog) {
         Dialog(
-            onDismissRequest = { viewModel.onDialogDismissed() },
+            onDismissRequest = {
+                viewModel.onDialogDismissed()
+            },
         ) {
 //            val image = (dialogState as? DialogState.InputDialogState.Edit)?.image
-            val title = (dialogState as? DialogState.InputDialogState.Edit)?.title
-            val description = (dialogState as? DialogState.InputDialogState.Edit)?.description
+            val title = (dialogState as? DialogState.InputDialog.Edit)?.title
+            val description = (dialogState as? DialogState.InputDialog.Edit)?.description
             Surface(
                 shape = RoundedCornerShape(16.dp),
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -274,7 +277,9 @@ class HostActivity : BaseErrorDialogActivity() {
                     .wrapContentHeight()
             ) {
                 NoteInputDialogContent(
-                    onCancel = { viewModel.onDialogDismissed() },
+                    onCancel = {
+                        viewModel.onDialogDismissed()
+                    },
                     onSubmit = { title, description ->
                         viewModel.onRecordDetailsSubmitRequested(title, description)
                     },

@@ -124,6 +124,12 @@ class BitmapStore(
         filename
     }
 
+    fun delete(filename: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            fileStore.delete(filename)
+        }
+    }
+
     /**
      * Inserts [suffix] before the extension in [filename], or appends it if there's no extension.
      *
@@ -134,7 +140,7 @@ class BitmapStore(
      *  - ".gitignore" + "-old" -> ".gitignore-old"  (leading dot not treated as extension)
      *  - "2025-07-28T20:50:19.901788.png" + "-thumb" -> "2025-07-28T20:50:19.901788-thumb.png"
      */
-    fun insertSuffixToFilename(filename: String, suffix: String): String {
+    private fun insertSuffixToFilename(filename: String, suffix: String): String {
         if (filename.isEmpty()) return filename
         val lastDot = filename.lastIndexOf('.')
         return if (lastDot > 0) { // dot not at start

@@ -4,7 +4,6 @@ import android.net.Uri
 import androidx.annotation.UiThread
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.features.common.BaseViewModel
-import dev.gaborbiro.notes.features.host.usecase.SaveImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.CreateRecordUseCase
 import dev.gaborbiro.notes.features.host.usecase.CreateValidationResult
 import dev.gaborbiro.notes.features.host.usecase.EditImageValidationResult
@@ -14,9 +13,11 @@ import dev.gaborbiro.notes.features.host.usecase.EditTemplateImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.EditTemplateUseCase
 import dev.gaborbiro.notes.features.host.usecase.EditValidationResult
 import dev.gaborbiro.notes.features.host.usecase.GetRecordImageUseCase
+import dev.gaborbiro.notes.features.host.usecase.SaveImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.ValidateCreateRecordUseCase
 import dev.gaborbiro.notes.features.host.usecase.ValidateEditImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.ValidateEditRecordUseCase
+import dev.gaborbiro.notes.store.bitmap.BitmapStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,6 +35,7 @@ class HostViewModel(
     private val editRecordImageUseCase: EditRecordImageUseCase,
     private val editTemplateImageUseCase: EditTemplateImageUseCase,
     private val getRecordImageUseCase: GetRecordImageUseCase,
+    private val bitmapStore: BitmapStore,
 ) : BaseViewModel() {
 
     companion object {
@@ -67,7 +69,7 @@ class HostViewModel(
     fun onStartWithJustText() {
         _uiState.update {
             it.copy(
-                dialog = DialogState.InputDialogState.Create(),
+                dialog = DialogState.InputDialog.Create(),
             )
         }
     }
@@ -108,7 +110,7 @@ class HostViewModel(
             val record = repository.getRecord(recordId)!!
             _uiState.update {
                 it.copy(
-                    dialog = DialogState.InputDialogState.Edit(
+                    dialog = DialogState.InputDialog.Edit(
                         recordId = recordId,
                         image = record.template.image,
                         title = record.template.name,
@@ -126,7 +128,7 @@ class HostViewModel(
             _uiState.update {
                 it.copy(
                     showCamera = false,
-                    dialog = DialogState.InputDialogState.CreateWithImage(image = filename),
+                    dialog = DialogState.InputDialog.CreateWithImage(image = filename),
                 )
             }
         }
@@ -142,7 +144,7 @@ class HostViewModel(
                     _uiState.update {
                         it.copy(
                             imagePicker = null,
-                            dialog = DialogState.InputDialogState.CreateWithImage(image = persistedFilename),
+                            dialog = DialogState.InputDialog.CreateWithImage(image = persistedFilename),
                         )
                     }
                 }
@@ -176,6 +178,10 @@ class HostViewModel(
     @UiThread
     fun onDialogDismissed() {
         _uiState.update {
+            (it.requireDialog() as? DialogState.InputDialog.CreateWithImage)
+                ?.image?.let {
+                    bitmapStore.delete(it)
+                }
             it.copy(
                 closeScreen = true,
             )
@@ -185,7 +191,7 @@ class HostViewModel(
     @UiThread
     fun onRecordDetailsUserTyping(title: String, description: String) {
         _uiState.update {
-            val dialogState: DialogState.InputDialogState = it.requireDialog()
+            val dialogState: DialogState.InputDialog = it.requireDialog()
             it.copy(
                 dialog = dialogState.withValidationError(validationError = null),
             )
@@ -194,14 +200,14 @@ class HostViewModel(
 
     @UiThread
     fun onRecordDetailsSubmitRequested(title: String, description: String) {
-        val dialogState: DialogState.InputDialogState = _uiState.value.requireDialog()
+        val dialogState: DialogState.InputDialog = _uiState.value.requireDialog()
         runSafely {
             when (dialogState) {
-                is DialogState.InputDialogState.Create, is DialogState.InputDialogState.CreateWithImage -> {
+                is DialogState.InputDialog.Create, is DialogState.InputDialog.CreateWithImage -> {
                     handleCreateRecordDetailsSubmitted(dialogState, title, description)
                 }
 
-                is DialogState.InputDialogState.Edit -> {
+                is DialogState.InputDialog.Edit -> {
                     handleEditRecordDialogSubmitted(dialogState, title, description)
                 }
             }
@@ -209,11 +215,11 @@ class HostViewModel(
     }
 
     private suspend fun handleCreateRecordDetailsSubmitted(
-        dialogState: DialogState.InputDialogState,
+        dialogState: DialogState.InputDialog,
         title: String,
         description: String,
     ) {
-        val image = (dialogState as? DialogState.InputDialogState.CreateWithImage)?.image
+        val image = (dialogState as? DialogState.InputDialog.CreateWithImage)?.image
         val result = validateCreateRecordUseCase.execute(image, title, description)
 
         when (result) {
@@ -229,7 +235,7 @@ class HostViewModel(
     }
 
     private suspend fun handleEditRecordDialogSubmitted(
-        dialogState: DialogState.InputDialogState.Edit,
+        dialogState: DialogState.InputDialog.Edit,
         title: String,
         description: String,
     ) {
@@ -269,7 +275,7 @@ class HostViewModel(
 
     private fun applyValidationError(message: String?) {
         _uiState.update {
-            val dialogState: DialogState.InputDialogState = it.requireDialog()
+            val dialogState: DialogState.InputDialog = it.requireDialog()
             it.copy(
                 dialog = dialogState.withValidationError(validationError = message),
             )
