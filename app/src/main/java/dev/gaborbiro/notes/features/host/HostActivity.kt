@@ -2,26 +2,14 @@ package dev.gaborbiro.notes.features.host
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
 import android.os.Bundle
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -39,9 +27,10 @@ import dev.gaborbiro.notes.features.host.usecase.SaveImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.ValidateCreateRecordUseCase
 import dev.gaborbiro.notes.features.host.usecase.ValidateEditImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.ValidateEditRecordUseCase
-import dev.gaborbiro.notes.features.host.views.EditTarget
-import dev.gaborbiro.notes.features.host.views.EditTargetConfirmationDialogContent
-import dev.gaborbiro.notes.features.host.views.NoteInputDialogContent
+import dev.gaborbiro.notes.features.host.views.EditImageTargetConfirmationDialog
+import dev.gaborbiro.notes.features.host.views.EditTargetConfirmationDialog
+import dev.gaborbiro.notes.features.host.views.ImageDialog
+import dev.gaborbiro.notes.features.host.views.InputDialog
 import dev.gaborbiro.notes.features.widget.NotesWidget
 import dev.gaborbiro.notes.imageFilename
 import dev.gaborbiro.notes.store.bitmap.BitmapStore
@@ -187,7 +176,7 @@ class HostActivity : BaseErrorDialogActivity() {
             }
 
             null -> {
-                // ignore
+                // nothing to do
             }
         }
 
@@ -245,112 +234,32 @@ class HostActivity : BaseErrorDialogActivity() {
     @Composable
     fun NotesDialog(dialogState: DialogState?) {
         when (dialogState) {
-            is DialogState.InputDialog -> InputDialog(dialogState)
-            is DialogState.EditTargetConfirmationDialog -> EditTargetConfirmationDialog(dialogState)
-            is DialogState.EditImageTargetConfirmationDialog -> EditImageTargetConfirmationDialog(
-                dialogState
+            is DialogState.InputDialog -> InputDialog(
+                dialogState = dialogState,
+                onDialogDismissed = viewModel::onDialogDismissed,
+                onRecordDetailsSubmitRequested = viewModel::onRecordDetailsSubmitRequested,
+                onRecordDetailsUserTyping = viewModel::onRecordDetailsUserTyping,
             )
 
-            is DialogState.ShowImageDialog -> ImageDialog(image = dialogState.bitmap)
+            is DialogState.EditTargetConfirmationDialog -> EditTargetConfirmationDialog(
+                dialogState = dialogState,
+                onEditTargetConfirmed = viewModel::onEditTargetConfirmed,
+                onDialogDismissed = viewModel::onDialogDismissed,
+            )
+
+            is DialogState.EditImageTargetConfirmationDialog -> EditImageTargetConfirmationDialog(
+                dialogState = dialogState,
+                onDialogDismissed = viewModel::onDialogDismissed,
+                onEditImageTargetConfirmed = viewModel::onEditImageTargetConfirmed,
+            )
+
+            is DialogState.ShowImageDialog -> ImageDialog(
+                image = dialogState.bitmap,
+                onDialogDismissed = viewModel::onDialogDismissed,
+            )
 
             null -> {
                 // no dialog is shown
-            }
-        }
-    }
-
-    @Composable
-    private fun InputDialog(dialogState: DialogState.InputDialog) {
-        Dialog(
-            onDismissRequest = {
-                viewModel.onDialogDismissed()
-            },
-        ) {
-//            val image = (dialogState as? DialogState.InputDialogState.Edit)?.image
-            val title = (dialogState as? DialogState.InputDialog.Edit)?.title
-            val description = (dialogState as? DialogState.InputDialog.Edit)?.description
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                shadowElevation = 4.dp,
-                modifier = Modifier
-                    .wrapContentHeight()
-            ) {
-                NoteInputDialogContent(
-                    onCancel = {
-                        viewModel.onDialogDismissed()
-                    },
-                    onSubmit = { title, description ->
-                        viewModel.onRecordDetailsSubmitRequested(title, description)
-                    },
-                    onChange = { title, description ->
-                        viewModel.onRecordDetailsUserTyping(title, description)
-                    },
-                    title = title,
-                    description = description,
-                    error = dialogState.validationError,
-                )
-            }
-        }
-    }
-
-    @Composable
-    private fun EditTargetConfirmationDialog(dialogState: DialogState.EditTargetConfirmationDialog) {
-        TargetConfirmationDialog(
-            count = dialogState.count,
-            onConfirmed = { viewModel.onEditTargetConfirmed(it) })
-    }
-
-    @Composable
-    private fun EditImageTargetConfirmationDialog(dialogState: DialogState.EditImageTargetConfirmationDialog) {
-        TargetConfirmationDialog(
-            count = dialogState.count,
-            onConfirmed = { viewModel.onEditImageTargetConfirmed(it) })
-    }
-
-    @Composable
-    private fun TargetConfirmationDialog(
-        count: Int,
-        onConfirmed: (HostViewModel.Companion.EditTarget) -> Unit,
-    ) {
-        Dialog(onDismissRequest = { viewModel.onDialogDismissed() }) {
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                shadowElevation = 4.dp,
-            ) {
-                EditTargetConfirmationDialogContent(
-                    count = count,
-                    onSubmit = { target ->
-                        val vmTarget = when (target) {
-                            EditTarget.RECORD -> HostViewModel.Companion.EditTarget.RECORD
-                            EditTarget.TEMPLATE -> HostViewModel.Companion.EditTarget.TEMPLATE
-                        }
-                        onConfirmed(vmTarget)
-                    },
-                    onCancel = { viewModel.onDialogDismissed() },
-                )
-            }
-        }
-    }
-
-    @Composable
-    private fun ImageDialog(image: Bitmap) {
-        Dialog(onDismissRequest = { viewModel.onDialogDismissed() }) {
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                shadowElevation = 4.dp,
-                modifier = Modifier.wrapContentSize()
-            ) {
-                Image(
-                    bitmap = image.asImageBitmap(),
-                    contentDescription = "",
-                    modifier = Modifier.size(
-                        width = image.width.dp * 2,
-                        height = image.height.dp * 2
-                    )
-                )
             }
         }
     }
