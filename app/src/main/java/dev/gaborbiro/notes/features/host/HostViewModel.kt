@@ -21,6 +21,7 @@ import dev.gaborbiro.notes.features.host.usecase.ValidateCreateRecordUseCase
 import dev.gaborbiro.notes.features.host.usecase.ValidateEditImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.ValidateEditRecordUseCase
 import dev.gaborbiro.notes.store.bitmap.BitmapStore
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -51,6 +52,8 @@ class HostViewModel(
 
     private val _uiState: MutableStateFlow<HostUIState> = MutableStateFlow(HostUIState())
     val uiState: StateFlow<HostUIState> = _uiState.asStateFlow()
+
+    private var imageSummaryJob: Job? = null
 
     @UiThread
     fun onStartWithCamera() {
@@ -129,7 +132,8 @@ class HostViewModel(
 
     @UiThread
     fun onPhotoTaken(filename: String) {
-        runSafely {
+        imageSummaryJob?.cancel()
+        imageSummaryJob = runSafely {
             _uiState.update {
                 it.copy(
                     showCamera = false,
@@ -166,7 +170,8 @@ class HostViewModel(
 
     @UiThread
     fun onImagePicked(uri: Uri?) {
-        runSafely {
+        imageSummaryJob?.cancel()
+        imageSummaryJob = runSafely {
             val imagePicker = _uiState.value.imagePicker!!
             _uiState.update {
                 it.copy(
@@ -243,6 +248,7 @@ class HostViewModel(
 
     @UiThread
     fun onDialogDismissed() {
+        imageSummaryJob?.cancel()
         runSafely {
             _uiState.update {
                 (it.dialog as? DialogState.InputDialog.CreateWithImage)

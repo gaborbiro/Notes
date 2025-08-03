@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dev.gaborbiro.notes.features.common.model.ErrorUIModel
 import ellipsize
 import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,8 +19,8 @@ abstract class BaseViewModel : ViewModel() {
     val errorState: StateFlow<ErrorUIModel?> = _errorState.asStateFlow()
 
 
-    protected fun runSafely(task: suspend () -> Unit) {
-        viewModelScope.launch(errorHandler) {
+    protected fun runSafely(task: suspend () -> Unit): Job {
+        return viewModelScope.launch(errorHandler) {
             task()
         }
     }

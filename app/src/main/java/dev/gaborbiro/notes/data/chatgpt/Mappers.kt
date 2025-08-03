@@ -1,6 +1,7 @@
 package dev.gaborbiro.notes.data.chatgpt
 
 import com.google.gson.GsonBuilder
+import com.google.gson.annotations.SerializedName
 import dev.gaborbiro.notes.data.chatgpt.model.DomainError
 import dev.gaborbiro.notes.data.chatgpt.model.FoodPicSummaryRequest
 import dev.gaborbiro.notes.data.chatgpt.model.FoodPicSummaryResponse
@@ -52,7 +53,15 @@ internal fun ChatGPTResponse.toFoodPicSummaryResponse(): FoodPicSummaryResponse 
             it.text.isNotBlank() && it.text != "null"
         }
         ?.text
-    return gson.fromJson(resultJson, FoodPicSummaryResponse::class.java)
+    class TitleAndKCal(
+        @SerializedName("title") val title: String,
+        @SerializedName("kcal") val kcal: Int,
+    )
+    val titleAndKCal = gson.fromJson(resultJson, TitleAndKCal::class.java)
+    return FoodPicSummaryResponse(
+        title = titleAndKCal.title,
+        kcal = titleAndKCal.kcal,
+    )
 }
 
 internal fun ChatGPTApiError.toDomainModel(): DomainError {
