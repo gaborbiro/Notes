@@ -2,6 +2,8 @@ package dev.gaborbiro.notes.features.host
 
 import android.net.Uri
 import androidx.annotation.UiThread
+import dev.gaborbiro.notes.data.chatgpt.ChatGPTRepository
+import dev.gaborbiro.notes.data.chatgpt.model.DomainError
 import dev.gaborbiro.notes.data.records.domain.RecordsRepository
 import dev.gaborbiro.notes.features.common.BaseViewModel
 import dev.gaborbiro.notes.features.host.usecase.CreateRecordUseCase
@@ -12,6 +14,7 @@ import dev.gaborbiro.notes.features.host.usecase.EditRecordUseCase
 import dev.gaborbiro.notes.features.host.usecase.EditTemplateImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.EditTemplateUseCase
 import dev.gaborbiro.notes.features.host.usecase.EditValidationResult
+import dev.gaborbiro.notes.features.host.usecase.FoodPicSummaryUseCase
 import dev.gaborbiro.notes.features.host.usecase.GetRecordImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.SaveImageUseCase
 import dev.gaborbiro.notes.features.host.usecase.ValidateCreateRecordUseCase
@@ -24,7 +27,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 class HostViewModel(
-    private val repository: RecordsRepository,
+    private val bitmapStore: BitmapStore,
+    private val recordsRepository: RecordsRepository,
+    private val chatGPTRepository: ChatGPTRepository,
     private val createRecordUseCase: CreateRecordUseCase,
     private val editRecordUseCase: EditRecordUseCase,
     private val editTemplateUseCase: EditTemplateUseCase,
@@ -35,7 +40,7 @@ class HostViewModel(
     private val editRecordImageUseCase: EditRecordImageUseCase,
     private val editTemplateImageUseCase: EditTemplateImageUseCase,
     private val getRecordImageUseCase: GetRecordImageUseCase,
-    private val bitmapStore: BitmapStore,
+    private val foodPicSummaryUseCase: FoodPicSummaryUseCase,
 ) : BaseViewModel() {
 
     companion object {
@@ -107,7 +112,7 @@ class HostViewModel(
     @UiThread
     fun onStartWithEdit(recordId: Long) {
         runSafely {
-            val record = repository.getRecord(recordId)!!
+            val record = recordsRepository.getRecord(recordId)!!
             _uiState.update {
                 it.copy(
                     dialog = DialogState.InputDialog.Edit(
@@ -128,8 +133,33 @@ class HostViewModel(
             _uiState.update {
                 it.copy(
                     showCamera = false,
-                    dialog = DialogState.InputDialog.CreateWithImage(image = filename),
+                    dialog = DialogState.InputDialog.CreateWithImage(
+                        image = filename,
+                        titleSuggestionProgressIndicator = true,
+                    ),
                 )
+            }
+            try {
+                val summary = foodPicSummaryUseCase.execute(filename)
+                summary?.let {
+                    _uiState.update { currentState ->
+                        if (currentState.dialog is DialogState.InputDialog.CreateWithImage) {
+                            currentState.copy(dialog = currentState.dialog.copy(titleSuggestion = it))
+                        } else {
+                            currentState
+                        }
+                    }
+                }
+            } catch (e: DomainError) {
+                e.printStackTrace()
+            } finally {
+                _uiState.update { currentState ->
+                    if (currentState.dialog is DialogState.InputDialog.CreateWithImage) {
+                        currentState.copy(dialog = currentState.dialog.copy(titleSuggestionProgressIndicator = false))
+                    } else {
+                        currentState
+                    }
+                }
             }
         }
     }
@@ -137,22 +167,58 @@ class HostViewModel(
     @UiThread
     fun onImagePicked(uri: Uri?) {
         runSafely {
-            val persistedFilename = uri?.let { saveImageUseCase.execute(it) }
             val imagePicker = _uiState.value.imagePicker!!
+            _uiState.update {
+                it.copy(
+                    imagePicker = null,
+                    dialog = DialogState.InputDialog.CreateWithImage(
+                        image = null,
+                        titleSuggestionProgressIndicator = true,
+                    ),
+                )
+            }
+            val persistedFilename = uri?.let { saveImageUseCase.execute(it) }
             when (imagePicker) {
                 ImagePickerState.Create -> {
                     _uiState.update {
                         it.copy(
                             imagePicker = null,
-                            dialog = DialogState.InputDialog.CreateWithImage(image = persistedFilename),
+                            dialog = DialogState.InputDialog.CreateWithImage(
+                                image = persistedFilename,
+                                titleSuggestionProgressIndicator = true,
+                            ),
                         )
+                    }
+                    persistedFilename?.let {
+                        try {
+                            val summary = foodPicSummaryUseCase.execute(persistedFilename)
+                            summary?.let {
+                                _uiState.update { currentState ->
+                                    if (currentState.dialog is DialogState.InputDialog.CreateWithImage) {
+                                        currentState.copy(dialog = currentState.dialog.copy(titleSuggestion = it))
+                                    } else {
+                                        currentState
+                                    }
+                                }
+                            }
+                        } catch (e: DomainError) {
+                            e.printStackTrace()
+                        } finally {
+                            _uiState.update { currentState ->
+                                if (currentState.dialog is DialogState.InputDialog.CreateWithImage) {
+                                    currentState.copy(dialog = currentState.dialog.copy(titleSuggestionProgressIndicator = false))
+                                } else {
+                                    currentState
+                                }
+                            }
+                        }
                     }
                 }
 
                 is ImagePickerState.EditImage -> {
                     val result = validateEditImageUseCase.execute(imagePicker.recordId)
                     when (result) {
-                        is EditImageValidationResult.ConfirmMultipleEdit -> {
+                        is EditImageValidationResult.AskConfirmation -> {
                             _uiState.update {
                                 it.copy(
                                     imagePicker = null,
@@ -177,14 +243,16 @@ class HostViewModel(
 
     @UiThread
     fun onDialogDismissed() {
-        _uiState.update {
-            (it.requireDialog() as? DialogState.InputDialog.CreateWithImage)
-                ?.image?.let {
-                    bitmapStore.delete(it)
-                }
-            it.copy(
-                closeScreen = true,
-            )
+        runSafely {
+            _uiState.update {
+                (it.dialog as? DialogState.InputDialog.CreateWithImage)
+                    ?.image?.let {
+                        bitmapStore.delete(it)
+                    }
+                it.copy(
+                    closeScreen = true,
+                )
+            }
         }
     }
 

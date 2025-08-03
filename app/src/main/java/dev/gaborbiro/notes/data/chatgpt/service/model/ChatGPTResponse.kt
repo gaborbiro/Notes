@@ -1,9 +1,7 @@
 package dev.gaborbiro.notes.data.chatgpt.service.model
 
-internal data class ChatGPTResponse(
-    val choices: List<Choice>,
-)
+import com.google.gson.annotations.SerializedName
 
-internal data class Choice(
-    val message: Message,
+internal data class ChatGPTResponse(
+    @SerializedName("output") val output: List<ContentEntry<OutputContent>>,
 )

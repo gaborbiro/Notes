@@ -5,7 +5,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.unit.dp
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
@@ -22,16 +21,14 @@ import androidx.work.WorkManager
 import com.google.gson.reflect.TypeToken
 import dev.gaborbiro.notes.data.records.domain.model.Record
 import dev.gaborbiro.notes.data.records.domain.model.Template
+import dev.gaborbiro.notes.design.NotesGlanceColorScheme
 import dev.gaborbiro.notes.features.common.RecordsUIMapper
 import dev.gaborbiro.notes.features.common.TemplatesUIMapper
 import dev.gaborbiro.notes.features.widget.views.NotesWidgetContent
-import dev.gaborbiro.notes.features.widget.views.WidgetImageSize
 import dev.gaborbiro.notes.features.widget.workers.ReloadWorkRequest
 import dev.gaborbiro.notes.store.bitmap.BitmapStore
-import dev.gaborbiro.notes.design.NotesGlanceColorScheme
 import dev.gaborbiro.notes.store.file.FileStoreFactoryImpl
 import dev.gaborbiro.notes.util.gson
-import dev.gaborbiro.notes.util.px
 
 class NotesWidget : GlanceAppWidget() {
 

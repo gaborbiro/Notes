@@ -19,12 +19,12 @@ abstract class BaseViewModel : ViewModel() {
 
 
     protected fun runSafely(task: suspend () -> Unit) {
-        viewModelScope.launch(deleteExceptionHandler) {
+        viewModelScope.launch(errorHandler) {
             task()
         }
     }
 
-    private val deleteExceptionHandler = CoroutineExceptionHandler { _, exception ->
+    private val errorHandler = CoroutineExceptionHandler { _, exception ->
         _errorState.update {
             ErrorUIModel(
                 "Oops. Something went wrong ${

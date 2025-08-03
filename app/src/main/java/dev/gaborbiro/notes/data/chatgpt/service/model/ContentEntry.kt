@@ -2,9 +2,9 @@ package dev.gaborbiro.notes.data.chatgpt.service.model
 
 import com.google.gson.annotations.SerializedName
 
-internal data class Message(
+internal data class ContentEntry<T>(
     @SerializedName("role") val role: Role,
-    @SerializedName("content") val content: String,
+    @SerializedName("content") val content: List<T>,
 )
 
 enum class Role {

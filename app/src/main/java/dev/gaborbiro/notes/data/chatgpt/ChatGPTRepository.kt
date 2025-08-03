@@ -1,10 +1,10 @@
 package dev.gaborbiro.notes.data.chatgpt
 
-import dev.gaborbiro.notes.data.chatgpt.model.QueryRequest
-import dev.gaborbiro.notes.data.chatgpt.model.Response
+import dev.gaborbiro.notes.data.chatgpt.model.FoodPicSummaryRequest
+import dev.gaborbiro.notes.data.chatgpt.model.FoodPicSummaryResponse
 
 
 interface ChatGPTRepository {
 
-    suspend fun query(query: QueryRequest): Response
+    suspend fun summarizeFoodPic(request: FoodPicSummaryRequest): FoodPicSummaryResponse
 }

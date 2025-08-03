@@ -13,12 +13,12 @@ class ValidateEditImageUseCase(
         return if (records.size < 2) {
             EditImageValidationResult.Valid
         } else {
-            EditImageValidationResult.ConfirmMultipleEdit(records.size)
+            EditImageValidationResult.AskConfirmation(records.size)
         }
     }
 }
 
 sealed class EditImageValidationResult {
-    class ConfirmMultipleEdit(val count: Int) : EditImageValidationResult()
+    class AskConfirmation(val count: Int) : EditImageValidationResult()
     object Valid : EditImageValidationResult()
 }

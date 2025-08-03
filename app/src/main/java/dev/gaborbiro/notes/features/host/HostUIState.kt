@@ -29,6 +29,7 @@ sealed class DialogState {
     sealed class InputDialog(
         open val validationError: String? = null,
     ) : DialogState() {
+
         data class Create(
             override val validationError: String? = null,
         ) : InputDialog(validationError) {
@@ -38,6 +39,8 @@ sealed class DialogState {
 
         data class CreateWithImage(
             val image: String?,
+            val titleSuggestion: String? = null,
+            val titleSuggestionProgressIndicator: Boolean = false,
             override val validationError: String? = null,
         ) : InputDialog(validationError) {
             override fun withValidationError(validationError: String?) =

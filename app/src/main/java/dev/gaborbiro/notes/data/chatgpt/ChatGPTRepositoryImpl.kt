@@ -1,7 +1,7 @@
 package dev.gaborbiro.notes.data.chatgpt
 
-import dev.gaborbiro.notes.data.chatgpt.model.QueryRequest
-import dev.gaborbiro.notes.data.chatgpt.model.Response
+import dev.gaborbiro.notes.data.chatgpt.model.FoodPicSummaryRequest
+import dev.gaborbiro.notes.data.chatgpt.model.FoodPicSummaryResponse
 import dev.gaborbiro.notes.data.chatgpt.service.ChatGPTService
 import dev.gaborbiro.notes.data.chatgpt.service.model.ChatGPTApiError
 import dev.gaborbiro.notes.data.chatgpt.util.parse
@@ -12,17 +12,14 @@ internal class ChatGPTRepositoryImpl(
     private val service: ChatGPTService,
 ) : ChatGPTRepository {
 
-    override suspend fun query(query: QueryRequest): Response {
-        runCatching(logTag = "getChatCompletions") {
-
-        }
+    override suspend fun summarizeFoodPic(request: FoodPicSummaryRequest): FoodPicSummaryResponse {
         try {
             return runCatching(logTag = "getChatCompletions") {
-                val response = service.getChatCompletions(
-                    request = query.toApiModel(),
+                val response = service.callResponses(
+                    request = request.toApiModel(),
                 )
                 return@runCatching parse(response)
-                    .toDomainModel()
+                    .toFoodPicSummaryResponse()
             }
         } catch (apiError: ChatGPTApiError) {
             throw apiError

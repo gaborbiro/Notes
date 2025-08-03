@@ -4,11 +4,10 @@ import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.util.LruCache
 import dev.gaborbiro.notes.ImageFileFormat
+import dev.gaborbiro.notes.data.chatgpt.service.model.ChatGPTApiError
 import dev.gaborbiro.notes.store.file.FileStore
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.io.File
+import java.io.InputStream
 
 class BitmapStore(
     private val fileStore: FileStore,
@@ -37,6 +36,14 @@ class BitmapStore(
                 return bitmap.byteCount
             }
         }
+    }
+
+    fun get(filename: String, thumbnail: Boolean): InputStream {
+        val finalFilename =
+            if (thumbnail) insertSuffixToFilename(filename, THUMBNAIL_SUFFIX) else filename
+        val path = fileStore.resolveFilePath(finalFilename)
+        if (File(path).exists().not()) throw ChatGPTApiError.GenericApiError("File not found: $path")
+        return fileStore.read(finalFilename)
     }
 
     fun read(filename: String, thumbnail: Boolean): Bitmap? {
@@ -112,22 +119,18 @@ class BitmapStore(
     }
 
     fun write(filename: String, bitmap: Bitmap) {
-        CoroutineScope(Dispatchers.IO).launch {
-            fileStore.write(filename) { outputStream ->
-                bitmap.compress(
-                    /* format = */ ImageFileFormat,
-                    /* quality = */ 0,  // quality is ignored with PNG
-                    /* stream = */ outputStream
-                )
-            }
+        fileStore.write(filename) { outputStream ->
+            bitmap.compress(
+                /* format = */ ImageFileFormat,
+                /* quality = */ 100,  // quality is ignored with PNG
+                /* stream = */ outputStream
+            )
         }
         filename
     }
 
     fun delete(filename: String) {
-        CoroutineScope(Dispatchers.IO).launch {
-            fileStore.delete(filename)
-        }
+        fileStore.delete(filename)
     }
 
     /**
